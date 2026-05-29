@@ -3,7 +3,7 @@
  * Plugin Name:       BlogLogistics Content Signals for Robots.txt
  * Plugin URI:        https://github.com/bloglogisticsdev/bloglogistics-content-signals-robots
  * Description:       Safely manages website-use preference signals in a physical robots.txt file.
- * Version:           1.0.3
+ * Version:           1.0.4
  * Requires at least: 7.0
  * Requires PHP:      8.3
  * Author:            BlogLogistics
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BLOGLOGISTICS_CSR_VERSION', '1.0.3' );
+define( 'BLOGLOGISTICS_CSR_VERSION', '1.0.4' );
 define( 'BLOGLOGISTICS_CSR_SLUG', 'bloglogistics-content-signals-robots' );
 define( 'BLOGLOGISTICS_CSR_FILE', __FILE__ );
 define( 'BLOGLOGISTICS_CSR_DIR', plugin_dir_path( __FILE__ ) );
@@ -216,8 +216,6 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 			$message_code   = isset( $_GET['bloglogistics_csr_message'] ) ? sanitize_key( wp_unslash( $_GET['bloglogistics_csr_message'] ) ) : '';
 			$robots_content = $file_readable ? (string) file_get_contents( $robots_path ) : '';
 			$backups        = $this->get_backups( $robots_path );
-			$restore_name   = isset( $_GET['bloglogistics_csr_confirm_restore'] ) ? sanitize_file_name( wp_unslash( $_GET['bloglogistics_csr_confirm_restore'] ) ) : '';
-			$restore_backup = $this->get_backup_by_basename( $backups, $restore_name );
 			?>
 			<div class="wrap bloglogistics-csr-wrap">
 				<h1><?php esc_html_e( 'Robots.txt Content Preferences', 'bloglogistics-content-signals-robots' ); ?></h1>
@@ -329,85 +327,11 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 
 				<h2><?php esc_html_e( 'Backups', 'bloglogistics-content-signals-robots' ); ?></h2>
 				<p><?php esc_html_e( 'Before changing robots.txt, this plugin saves a backup copy. The plugin keeps the latest 5 backups so you can recover from mistakes without filling your server with old files.', 'bloglogistics-content-signals-robots' ); ?></p>
-				<?php $this->render_restore_confirmation( $restore_backup ); ?>
 				<?php $this->render_backups_table( $backups ); ?>
 
 				<p class="description"><?php esc_html_e( 'If this plugin is deleted, its saved settings and backup files are removed. Your current robots.txt file is left as-is.', 'bloglogistics-content-signals-robots' ); ?></p>
 			</div>
 			<?php
-		}
-
-		/**
-		 * Render an in-page confirmation before restoring a backup.
-		 *
-		 * @param array{path:string,basename:string,time:int}|null $backup Backup to confirm.
-		 */
-		private function render_restore_confirmation( ?array $backup ): void {
-			if ( null === $backup ) {
-				return;
-			}
-
-			$backup_date = $this->format_backup_timestamp( $backup['time'] );
-			?>
-			<div class="notice notice-warning inline" style="max-width: 1000px; padding-bottom: 12px;">
-				<h3><?php esc_html_e( 'Confirm backup restore', 'bloglogistics-content-signals-robots' ); ?></h3>
-				<p><?php esc_html_e( 'You are about to restore this backup:', 'bloglogistics-content-signals-robots' ); ?></p>
-				<p><strong><?php echo esc_html( $backup_date ); ?></strong></p>
-				<p><?php esc_html_e( 'This will replace the current robots.txt file with the selected backup. No new backup will be created during restore.', 'bloglogistics-content-signals-robots' ); ?></p>
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline-block; margin-right: 8px;">
-					<input type="hidden" name="action" value="bloglogistics_csr_restore_backup" />
-					<input type="hidden" name="bloglogistics_csr_backup" value="<?php echo esc_attr( $backup['basename'] ); ?>" />
-					<?php wp_nonce_field( 'bloglogistics_csr_restore_backup', 'bloglogistics_csr_restore_backup_nonce' ); ?>
-					<?php submit_button( esc_html__( 'Yes, restore this backup', 'bloglogistics-content-signals-robots' ), 'primary', 'submit', false ); ?>
-				</form>
-				<a class="button button-secondary" href="<?php echo esc_url( $this->get_settings_page_url() ); ?>"><?php esc_html_e( 'Cancel', 'bloglogistics-content-signals-robots' ); ?></a>
-			</div>
-			<?php
-		}
-
-		/**
-		 * Get the settings page URL.
-		 */
-		private function get_settings_page_url(): string {
-			return add_query_arg(
-				array(
-					'page' => 'bloglogistics-content-signals-robots',
-				),
-				admin_url( 'admin.php' )
-			);
-		}
-
-		/**
-		 * Get the in-page restore confirmation URL.
-		 */
-		private function get_restore_confirmation_url( string $basename ): string {
-			return add_query_arg(
-				array(
-					'page'                              => 'bloglogistics-content-signals-robots',
-					'bloglogistics_csr_confirm_restore' => rawurlencode( $basename ),
-				),
-				admin_url( 'admin.php' )
-			);
-		}
-
-		/**
-		 * Find a backup by basename.
-		 *
-		 * @param array<int,array{path:string,basename:string,time:int}> $backups Backups.
-		 * @return array{path:string,basename:string,time:int}|null
-		 */
-		private function get_backup_by_basename( array $backups, string $basename ): ?array {
-			if ( '' === $basename || ! $this->is_backup_basename( $basename ) ) {
-				return null;
-			}
-
-			foreach ( $backups as $backup ) {
-				if ( $basename === $backup['basename'] ) {
-					return $backup;
-				}
-			}
-
-			return null;
 		}
 
 		/**
@@ -423,7 +347,7 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 				return;
 			}
 			?>
-			<table class="widefat striped" style="max-width: 1000px;">
+			<table class="widefat striped bloglogistics-csr-backups-table" style="max-width: 1000px;">
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'Backup date and time', 'bloglogistics-content-signals-robots' ); ?></th>
@@ -432,17 +356,83 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 				</thead>
 				<tbody>
 					<?php foreach ( $backups as $backup ) : ?>
+						<?php
+						$backup_date = $this->format_backup_timestamp( $backup['time'] );
+						$row_id      = 'bloglogistics-csr-restore-' . md5( $backup['basename'] );
+						?>
 						<tr>
-							<td><?php echo esc_html( $this->format_backup_timestamp( $backup['time'] ) ); ?></td>
+							<td><?php echo esc_html( $backup_date ); ?></td>
 							<td>
-								<a class="button button-secondary" href="<?php echo esc_url( $this->get_restore_confirmation_url( $backup['basename'] ) ); ?>">
+								<button type="button" class="button button-secondary bloglogistics-csr-restore-toggle" data-target="<?php echo esc_attr( $row_id ); ?>">
 									<?php esc_html_e( 'Restore', 'bloglogistics-content-signals-robots' ); ?>
-								</a>
+								</button>
+							</td>
+						</tr>
+						<tr id="<?php echo esc_attr( $row_id ); ?>" class="bloglogistics-csr-restore-confirmation" style="display: none;">
+							<td colspan="2">
+								<div class="notice notice-warning inline" style="margin: 0; padding-bottom: 12px;">
+									<h3><?php esc_html_e( 'Confirm backup restore', 'bloglogistics-content-signals-robots' ); ?></h3>
+									<p>
+										<?php esc_html_e( 'You are about to restore this backup:', 'bloglogistics-content-signals-robots' ); ?>
+										<strong><?php echo esc_html( $backup_date ); ?></strong>
+									</p>
+									<p><?php esc_html_e( 'This will replace the current robots.txt file with the selected backup. No new backup will be created during restore.', 'bloglogistics-content-signals-robots' ); ?></p>
+									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline-block; margin-right: 8px;">
+										<input type="hidden" name="action" value="bloglogistics_csr_restore_backup" />
+										<input type="hidden" name="bloglogistics_csr_backup" value="<?php echo esc_attr( $backup['basename'] ); ?>" />
+										<?php wp_nonce_field( 'bloglogistics_csr_restore_backup', 'bloglogistics_csr_restore_backup_nonce' ); ?>
+										<?php submit_button( esc_html__( 'Yes, restore this backup', 'bloglogistics-content-signals-robots' ), 'primary', 'submit', false ); ?>
+									</form>
+									<button type="button" class="button button-secondary bloglogistics-csr-restore-cancel" data-target="<?php echo esc_attr( $row_id ); ?>">
+										<?php esc_html_e( 'Cancel', 'bloglogistics-content-signals-robots' ); ?>
+									</button>
+								</div>
 							</td>
 						</tr>
 					<?php endforeach; ?>
 				</tbody>
 			</table>
+			<script>
+				document.addEventListener('DOMContentLoaded', function () {
+					var confirmations = document.querySelectorAll('.bloglogistics-csr-restore-confirmation');
+					var toggleButtons = document.querySelectorAll('.bloglogistics-csr-restore-toggle');
+					var cancelButtons = document.querySelectorAll('.bloglogistics-csr-restore-cancel');
+
+					function hideAllConfirmations() {
+						confirmations.forEach(function (row) {
+							row.style.display = 'none';
+						});
+					}
+
+					toggleButtons.forEach(function (button) {
+						button.addEventListener('click', function () {
+							var row = document.getElementById(button.getAttribute('data-target'));
+
+							if (!row) {
+								return;
+							}
+
+							if ('none' !== row.style.display) {
+								row.style.display = 'none';
+								return;
+							}
+
+							hideAllConfirmations();
+							row.style.display = 'table-row';
+						});
+					});
+
+					cancelButtons.forEach(function (button) {
+						button.addEventListener('click', function () {
+							var row = document.getElementById(button.getAttribute('data-target'));
+
+							if (row) {
+								row.style.display = 'none';
+							}
+						});
+					});
+				});
+			</script>
 			<?php
 		}
 

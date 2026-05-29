@@ -4,7 +4,7 @@ Tags: robots.txt, content signal, ai, search, crawlers
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 8.3
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -83,6 +83,10 @@ Yes. The settings page lists the latest available backups with restore buttons. 
 The plugin removes its saved settings and plugin-created backup files. Your current robots.txt file is left as-is.
 
 == Changelog ==
+
+= 1.0.4 =
+* Replace page-reload restore confirmation with inline row-level confirmation in the backups table.
+* Keep users in place when confirming a backup restore.
 
 = 1.0.3 =
 * Replace the browser restore pop-up with an in-page backup restore confirmation.
