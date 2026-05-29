@@ -3,7 +3,7 @@
  * Plugin Name:       BlogLogistics Content Signals for Robots.txt
  * Plugin URI:        https://github.com/bloglogisticsdev/bloglogistics-content-signals-robots
  * Description:       Safely manages website-use preference signals in a physical robots.txt file.
- * Version:           1.0.4
+ * Version:           1.0.5
  * Requires at least: 7.0
  * Requires PHP:      8.3
  * Author:            BlogLogistics
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BLOGLOGISTICS_CSR_VERSION', '1.0.4' );
+define( 'BLOGLOGISTICS_CSR_VERSION', '1.0.5' );
 define( 'BLOGLOGISTICS_CSR_SLUG', 'bloglogistics-content-signals-robots' );
 define( 'BLOGLOGISTICS_CSR_FILE', __FILE__ );
 define( 'BLOGLOGISTICS_CSR_DIR', plugin_dir_path( __FILE__ ) );
@@ -213,6 +213,11 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 			$file_readable  = $file_exists && is_readable( $robots_path );
 			$file_writable  = $file_exists && is_writable( $robots_path );
 			$line_preview   = $this->build_signal_line( $options );
+			$default_options = self::defaults();
+			$is_default     = (bool) $options['enabled'] === (bool) $default_options['enabled']
+				&& (bool) $options['allow_search'] === (bool) $default_options['allow_search']
+				&& (bool) $options['allow_ai_answers'] === (bool) $default_options['allow_ai_answers']
+				&& (bool) $options['allow_ai_training'] === (bool) $default_options['allow_ai_training'];
 			$message_code   = isset( $_GET['bloglogistics_csr_message'] ) ? sanitize_key( wp_unslash( $_GET['bloglogistics_csr_message'] ) ) : '';
 			$robots_content = $file_readable ? (string) file_get_contents( $robots_path ) : '';
 			$backups        = $this->get_backups( $robots_path );
@@ -242,7 +247,7 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 					</tbody>
 				</table>
 
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="max-width: 1000px; margin-top: 20px;">
+				<form id="bloglogistics-csr-preferences-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="max-width: 1000px; margin-top: 20px;">
 					<input type="hidden" name="action" value="bloglogistics_csr_save" />
 					<?php wp_nonce_field( 'bloglogistics_csr_save', 'bloglogistics_csr_nonce' ); ?>
 
@@ -254,7 +259,7 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 								<th scope="row"><?php esc_html_e( 'Use this plugin to manage robots.txt', 'bloglogistics-content-signals-robots' ); ?></th>
 								<td>
 									<label>
-										<input type="checkbox" name="bloglogistics_csr_enabled" value="1" <?php checked( ! empty( $options['enabled'] ) ); ?> />
+										<input type="checkbox" id="bloglogistics_csr_enabled" class="bloglogistics-csr-preference-input" name="bloglogistics_csr_enabled" value="1" <?php checked( ! empty( $options['enabled'] ) ); ?> />
 										<?php esc_html_e( 'Manage website-use preferences in robots.txt.', 'bloglogistics-content-signals-robots' ); ?>
 									</label>
 									<p class="description"><?php esc_html_e( 'Turn this on to let this plugin add or update the preference line in your physical robots.txt file. Turn it off to restore the original preference line, or remove it if there was not one before.', 'bloglogistics-content-signals-robots' ); ?></p>
@@ -265,7 +270,7 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 								<th scope="row"><?php esc_html_e( 'Search results', 'bloglogistics-content-signals-robots' ); ?></th>
 								<td>
 									<label>
-										<input type="checkbox" name="bloglogistics_csr_allow_search" value="1" <?php checked( ! empty( $options['allow_search'] ) ); ?> />
+										<input type="checkbox" id="bloglogistics_csr_allow_search" class="bloglogistics-csr-preference-input" name="bloglogistics_csr_allow_search" value="1" <?php checked( ! empty( $options['allow_search'] ) ); ?> />
 										<?php esc_html_e( 'Allow search engines to show this site in search results.', 'bloglogistics-content-signals-robots' ); ?>
 									</label>
 									<p class="description"><?php esc_html_e( 'Recommended: On. This allows normal search engines to include the site in search results.', 'bloglogistics-content-signals-robots' ); ?></p>
@@ -276,7 +281,7 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 								<th scope="row"><?php esc_html_e( 'AI answers', 'bloglogistics-content-signals-robots' ); ?></th>
 								<td>
 									<label>
-										<input type="checkbox" name="bloglogistics_csr_allow_ai_answers" value="1" <?php checked( ! empty( $options['allow_ai_answers'] ) ); ?> />
+										<input type="checkbox" id="bloglogistics_csr_allow_ai_answers" class="bloglogistics-csr-preference-input" name="bloglogistics_csr_allow_ai_answers" value="1" <?php checked( ! empty( $options['allow_ai_answers'] ) ); ?> />
 										<?php esc_html_e( 'Allow AI tools to use this site when answering users.', 'bloglogistics-content-signals-robots' ); ?>
 									</label>
 									<p class="description"><?php esc_html_e( 'Recommended: On. This allows AI tools to use the site as a source when answering questions.', 'bloglogistics-content-signals-robots' ); ?></p>
@@ -287,7 +292,7 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 								<th scope="row"><?php esc_html_e( 'AI training', 'bloglogistics-content-signals-robots' ); ?></th>
 								<td>
 									<label>
-										<input type="checkbox" name="bloglogistics_csr_allow_ai_training" value="1" <?php checked( ! empty( $options['allow_ai_training'] ) ); ?> />
+										<input type="checkbox" id="bloglogistics_csr_allow_ai_training" class="bloglogistics-csr-preference-input" name="bloglogistics_csr_allow_ai_training" value="1" <?php checked( ! empty( $options['allow_ai_training'] ) ); ?> />
 										<?php esc_html_e( 'Allow AI companies to use this site for AI training.', 'bloglogistics-content-signals-robots' ); ?>
 									</label>
 									<p class="description"><?php esc_html_e( 'Recommended: Off. This tells AI companies that the site should not be used to train AI models.', 'bloglogistics-content-signals-robots' ); ?></p>
@@ -303,26 +308,28 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 
 					<h2><?php esc_html_e( 'robots.txt line that will be used', 'bloglogistics-content-signals-robots' ); ?></h2>
 					<p class="description"><?php esc_html_e( 'This is the technical line added to robots.txt based on your choices above.', 'bloglogistics-content-signals-robots' ); ?></p>
-					<p><code><?php echo esc_html( $line_preview ); ?></code></p>
+					<p><code id="bloglogistics-csr-line-preview"><?php echo esc_html( $line_preview ); ?></code></p>
 
-					<?php submit_button( esc_html__( 'Save Preferences', 'bloglogistics-content-signals-robots' ) ); ?>
+					<?php submit_button( esc_html__( 'Save Preferences', 'bloglogistics-content-signals-robots' ), 'primary', 'submit', true, array( 'id' => 'bloglogistics-csr-save-preferences', 'disabled' => 'disabled' ) ); ?>
+					<p id="bloglogistics-csr-preferences-status" class="description"><?php esc_html_e( 'No changes to save.', 'bloglogistics-content-signals-robots' ); ?></p>
 				</form>
 
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top: 10px;">
 					<input type="hidden" name="action" value="bloglogistics_csr_restore_defaults" />
 					<?php wp_nonce_field( 'bloglogistics_csr_restore_defaults', 'bloglogistics_csr_defaults_nonce' ); ?>
-					<?php submit_button( esc_html__( 'Restore recommended defaults', 'bloglogistics-content-signals-robots' ), 'secondary', 'submit', false ); ?>
+					<?php submit_button( esc_html__( 'Restore recommended defaults', 'bloglogistics-content-signals-robots' ), 'secondary', 'submit', false, array_merge( array( 'id' => 'bloglogistics-csr-restore-defaults' ), $is_default ? array( 'disabled' => 'disabled' ) : array() ) ); ?>
 					<p class="description"><?php esc_html_e( 'This turns search results and AI answers on, and AI training off.', 'bloglogistics-content-signals-robots' ); ?></p>
 				</form>
 
 				<h2 style="margin-top: 30px;"><?php esc_html_e( 'Full robots.txt editor', 'bloglogistics-content-signals-robots' ); ?></h2>
 				<p><?php esc_html_e( 'Use this only when you need to review or manually edit the full robots.txt file. A broken robots.txt file can affect how search engines and crawlers access your site.', 'bloglogistics-content-signals-robots' ); ?></p>
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="max-width: 1000px;">
+				<form id="bloglogistics-csr-editor-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="max-width: 1000px;">
 					<input type="hidden" name="action" value="bloglogistics_csr_save_editor" />
 					<?php wp_nonce_field( 'bloglogistics_csr_save_editor', 'bloglogistics_csr_editor_nonce' ); ?>
-					<textarea name="bloglogistics_csr_robots_contents" rows="18" class="large-text code" <?php disabled( ! $file_readable || ! $file_writable ); ?>><?php echo esc_textarea( $robots_content ); ?></textarea>
+					<textarea id="bloglogistics-csr-robots-contents" name="bloglogistics_csr_robots_contents" rows="18" class="large-text code" <?php disabled( ! $file_readable || ! $file_writable ); ?>><?php echo esc_textarea( $robots_content ); ?></textarea>
 					<p class="description"><?php esc_html_e( 'If you manually change the preference line under User-agent: *, the toggle boxes above will update to match after saving.', 'bloglogistics-content-signals-robots' ); ?></p>
-					<?php submit_button( esc_html__( 'Save full robots.txt', 'bloglogistics-content-signals-robots' ), 'secondary' ); ?>
+					<?php submit_button( esc_html__( 'Save full robots.txt', 'bloglogistics-content-signals-robots' ), 'secondary', 'submit', true, array( 'id' => 'bloglogistics-csr-save-editor', 'disabled' => 'disabled' ) ); ?>
+					<p id="bloglogistics-csr-editor-status" class="description"><?php esc_html_e( 'No changes to save.', 'bloglogistics-content-signals-robots' ); ?></p>
 				</form>
 
 				<h2><?php esc_html_e( 'Backups', 'bloglogistics-content-signals-robots' ); ?></h2>
@@ -330,6 +337,74 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 				<?php $this->render_backups_table( $backups ); ?>
 
 				<p class="description"><?php esc_html_e( 'If this plugin is deleted, its saved settings and backup files are removed. Your current robots.txt file is left as-is.', 'bloglogistics-content-signals-robots' ); ?></p>
+
+				<script>
+					document.addEventListener('DOMContentLoaded', function () {
+						var preferenceInputs = Array.prototype.slice.call(document.querySelectorAll('.bloglogistics-csr-preference-input'));
+						var savePreferences = document.getElementById('bloglogistics-csr-save-preferences');
+						var preferencesStatus = document.getElementById('bloglogistics-csr-preferences-status');
+						var linePreview = document.getElementById('bloglogistics-csr-line-preview');
+						var editor = document.getElementById('bloglogistics-csr-robots-contents');
+						var saveEditor = document.getElementById('bloglogistics-csr-save-editor');
+						var editorStatus = document.getElementById('bloglogistics-csr-editor-status');
+
+						function checkboxSnapshot(inputs) {
+							return inputs.map(function (input) {
+								return input.checked ? '1' : '0';
+							}).join('|');
+						}
+
+						function normalizeText(value) {
+							return String(value || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+						}
+
+						function buildPreviewLine() {
+							var search = document.getElementById('bloglogistics_csr_allow_search');
+							var aiAnswers = document.getElementById('bloglogistics_csr_allow_ai_answers');
+							var aiTraining = document.getElementById('bloglogistics_csr_allow_ai_training');
+							return 'Content-Signal: search=' + (search && search.checked ? 'yes' : 'no') + ', ai-input=' + (aiAnswers && aiAnswers.checked ? 'yes' : 'no') + ', ai-train=' + (aiTraining && aiTraining.checked ? 'yes' : 'no');
+						}
+
+						if (preferenceInputs.length && savePreferences) {
+							var originalPreferences = checkboxSnapshot(preferenceInputs);
+
+							function updatePreferenceButton() {
+								var changed = checkboxSnapshot(preferenceInputs) !== originalPreferences;
+								savePreferences.disabled = !changed;
+
+								if (preferencesStatus) {
+									preferencesStatus.textContent = changed ? 'You have unsaved changes.' : 'No changes to save.';
+								}
+
+								if (linePreview) {
+									linePreview.textContent = buildPreviewLine();
+								}
+							}
+
+							preferenceInputs.forEach(function (input) {
+								input.addEventListener('change', updatePreferenceButton);
+							});
+
+							updatePreferenceButton();
+						}
+
+						if (editor && saveEditor) {
+							var originalEditorValue = normalizeText(editor.value);
+
+							function updateEditorButton() {
+								var changed = normalizeText(editor.value) !== originalEditorValue;
+								saveEditor.disabled = !changed || editor.disabled;
+
+								if (editorStatus) {
+									editorStatus.textContent = changed ? 'You have unsaved changes.' : 'No changes to save.';
+								}
+							}
+
+							editor.addEventListener('input', updateEditorButton);
+							updateEditorButton();
+						}
+					});
+				</script>
 			</div>
 			<?php
 		}
@@ -450,7 +525,7 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 				'editor_updated'   => array( 'success', __( 'robots.txt was saved, a backup was created, and the settings were updated to match the saved file.', 'bloglogistics-content-signals-robots' ) ),
 				'editor_cleaned'   => array( 'success', __( 'robots.txt was saved, a backup was created, older backups were cleaned up, and the settings were updated to match the saved file.', 'bloglogistics-content-signals-robots' ) ),
 				'backup_restored'  => array( 'success', __( 'The selected backup was restored. The settings were updated to match the restored file.', 'bloglogistics-content-signals-robots' ) ),
-				'no_change'        => array( 'success', __( 'Settings saved. robots.txt already matched these settings, so no file change was needed.', 'bloglogistics-content-signals-robots' ) ),
+				'no_change'        => array( 'success', __( 'No changes were made because robots.txt already matched the submitted settings.', 'bloglogistics-content-signals-robots' ) ),
 				'defaults'         => array( 'success', __( 'Recommended defaults restored.', 'bloglogistics-content-signals-robots' ) ),
 				'missing'          => array( 'error', __( 'No physical robots.txt file was found. This plugin is intended for sites with a real robots.txt file.', 'bloglogistics-content-signals-robots' ) ),
 				'unreadable'       => array( 'error', __( 'robots.txt exists, but this plugin could not read it.', 'bloglogistics-content-signals-robots' ) ),
@@ -613,10 +688,11 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 				$this->redirect_with_message( 'unreadable' );
 			}
 
-			$new_contents = isset( $_POST['bloglogistics_csr_robots_contents'] ) ? wp_unslash( $_POST['bloglogistics_csr_robots_contents'] ) : '';
-			$new_contents = str_replace( array( "\r\n", "\r" ), "\n", (string) $new_contents );
+			$new_contents                = isset( $_POST['bloglogistics_csr_robots_contents'] ) ? wp_unslash( $_POST['bloglogistics_csr_robots_contents'] ) : '';
+			$new_contents                = str_replace( array( "\r\n", "\r" ), "\n", (string) $new_contents );
+			$current_contents_normalized = str_replace( array( "\r\n", "\r" ), "\n", (string) $current_contents );
 
-			if ( $new_contents === $current_contents ) {
+			if ( $new_contents === $current_contents_normalized ) {
 				$options = $this->sync_options_from_contents( $this->get_options(), $current_contents );
 				update_option( self::OPTION_NAME, $options );
 				$this->redirect_with_message( 'no_change' );

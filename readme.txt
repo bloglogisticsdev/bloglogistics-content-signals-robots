@@ -4,7 +4,7 @@ Tags: robots.txt, content signal, ai, search, crawlers
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 8.3
-Stable tag: 1.0.4
+Stable tag: 1.0.5
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -76,13 +76,20 @@ Yes. The settings page includes a full robots.txt editor. If you manually change
 
 = Can I restore a backup? =
 
-Yes. The settings page lists the latest available backups with restore buttons. Before restoring a backup, the plugin backs up the current robots.txt file first.
+Yes. The settings page lists the latest available backups with restore buttons. Restoring a backup replaces the current robots.txt file with the selected backup. No new backup is created during restore.
 
 = What happens if I delete the plugin? =
 
 The plugin removes its saved settings and plugin-created backup files. Your current robots.txt file is left as-is.
 
 == Changelog ==
+
+= 1.0.5 =
+* Disable Save Preferences until website-use preferences actually change.
+* Disable Save full robots.txt until the editor contents actually change.
+* Disable Restore recommended defaults when the saved settings already match the recommended defaults.
+* Prevent no-change saves from creating backups on the server side.
+* Show clear no-change and unsaved-change messages.
 
 = 1.0.4 =
 * Replace page-reload restore confirmation with inline row-level confirmation in the backups table.
