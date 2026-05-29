@@ -4,7 +4,7 @@ Tags: robots.txt, content signal, ai, search, crawlers
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 8.3
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -37,6 +37,11 @@ These settings publish your website’s preferences in robots.txt. They do not g
 * Saves a backup before changing robots.txt.
 * Keeps only the latest 5 backups to avoid filling the server with old files.
 * Adds settings under BlogLogistics > Robots.txt Content Preferences.
+* Shows the full robots.txt file for review and manual editing.
+* Syncs the plain-language toggles when the Content-Signal line is manually edited.
+* Shows when the file was last changed by this plugin.
+* Lists available backups and allows restoring a selected backup.
+* Removes plugin settings and plugin-created backup files when the plugin is deleted, while leaving the current robots.txt file as-is.
 * Uses BlogLogistics manifest-based updates.
 
 == Installation ==
@@ -65,7 +70,27 @@ If there was an original Content-Signal line, the plugin restores it. If there w
 
 Before changing robots.txt, this plugin saves a backup copy. The plugin keeps the latest 5 backups so you can recover from mistakes without filling your server with old files.
 
+= Can I manually edit robots.txt? =
+
+Yes. The settings page includes a full robots.txt editor. If you manually change the Content-Signal line under User-agent: *, the toggle boxes update to match after saving.
+
+= Can I restore a backup? =
+
+Yes. The settings page lists the latest available backups with restore buttons. Before restoring a backup, the plugin backs up the current robots.txt file first.
+
+= What happens if I delete the plugin? =
+
+The plugin removes its saved settings and plugin-created backup files. Your current robots.txt file is left as-is.
+
 == Changelog ==
+
+= 1.0.1 =
+* Add full robots.txt editor for review and manual editing.
+* Sync settings toggles when the Content-Signal line is manually edited.
+* Remove the server file path from the status display.
+* Show when robots.txt was last changed by this plugin.
+* List available backups and add restore buttons.
+* Add uninstall cleanup for plugin settings and plugin-created backup files while leaving robots.txt as-is.
 
 = 1.0.0 =
 * Initial release.

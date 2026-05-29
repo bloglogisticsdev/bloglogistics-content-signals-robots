@@ -3,7 +3,7 @@
  * Plugin Name:       BlogLogistics Content Signals for Robots.txt
  * Plugin URI:        https://github.com/bloglogisticsdev/bloglogistics-content-signals-robots
  * Description:       Safely manages website-use preference signals in a physical robots.txt file.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Requires at least: 7.0
  * Requires PHP:      8.3
  * Author:            BlogLogistics
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BLOGLOGISTICS_CSR_VERSION', '1.0.0' );
+define( 'BLOGLOGISTICS_CSR_VERSION', '1.0.1' );
 define( 'BLOGLOGISTICS_CSR_SLUG', 'bloglogistics-content-signals-robots' );
 define( 'BLOGLOGISTICS_CSR_FILE', __FILE__ );
 define( 'BLOGLOGISTICS_CSR_DIR', plugin_dir_path( __FILE__ ) );
@@ -52,8 +52,10 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 	 */
 	final class BlogLogistics_Content_Signals_Robots {
 
-		private const OPTION_NAME = 'bloglogistics_csr_options';
-		private const MAX_BACKUPS = 5;
+		private const OPTION_NAME       = 'bloglogistics_csr_options';
+		private const MAX_BACKUPS       = 5;
+		private const BACKUP_PREFIX_NEW = '.bloglogistics-content-signals-backup-';
+		private const BACKUP_PREFIX_OLD = '.bloglogistics-backup-';
 
 		/**
 		 * Register hooks.
@@ -62,6 +64,8 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 			add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 			add_action( 'admin_post_bloglogistics_csr_save', array( $this, 'handle_save' ) );
 			add_action( 'admin_post_bloglogistics_csr_restore_defaults', array( $this, 'handle_restore_defaults' ) );
+			add_action( 'admin_post_bloglogistics_csr_save_editor', array( $this, 'handle_save_editor' ) );
+			add_action( 'admin_post_bloglogistics_csr_restore_backup', array( $this, 'handle_restore_backup' ) );
 		}
 
 		/**
@@ -78,6 +82,8 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 				'original_captured'      => false,
 				'original_signal_line'   => '',
 				'original_signal_exists' => false,
+				'last_changed_gmt'       => '',
+				'last_changed_reason'    => '',
 			);
 		}
 
@@ -95,7 +101,11 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 			update_option( self::OPTION_NAME, $options );
 
 			$instance = new self();
-			$instance->apply_preferences( $options );
+			$result   = $instance->apply_preferences( $options, 'activation' );
+
+			if ( ! in_array( $result['status'], array( 'missing', 'unreadable', 'unwritable', 'backup_failed', 'write_failed' ), true ) ) {
+				update_option( self::OPTION_NAME, $result['options'] );
+			}
 		}
 
 		/**
@@ -204,6 +214,8 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 			$file_writable  = $file_exists && is_writable( $robots_path );
 			$line_preview   = $this->build_signal_line( $options );
 			$message_code   = isset( $_GET['bloglogistics_csr_message'] ) ? sanitize_key( wp_unslash( $_GET['bloglogistics_csr_message'] ) ) : '';
+			$robots_content = $file_readable ? (string) file_get_contents( $robots_path ) : '';
+			$backups        = $this->get_backups( $robots_path );
 			?>
 			<div class="wrap bloglogistics-csr-wrap">
 				<h1><?php esc_html_e( 'Robots.txt Content Preferences', 'bloglogistics-content-signals-robots' ); ?></h1>
@@ -217,33 +229,33 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 				</div>
 
 				<h2><?php esc_html_e( 'robots.txt file status', 'bloglogistics-content-signals-robots' ); ?></h2>
-				<table class="widefat striped" style="max-width: 900px;">
+				<table class="widefat striped" style="max-width: 1000px;">
 					<tbody>
-						<tr>
-							<th scope="row"><?php esc_html_e( 'File path', 'bloglogistics-content-signals-robots' ); ?></th>
-							<td><code><?php echo esc_html( $robots_path ); ?></code></td>
-						</tr>
 						<tr>
 							<th scope="row"><?php esc_html_e( 'Status', 'bloglogistics-content-signals-robots' ); ?></th>
 							<td><?php echo esc_html( $this->get_file_status_text( $file_exists, $file_readable, $file_writable ) ); ?></td>
 						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Last changed by this plugin', 'bloglogistics-content-signals-robots' ); ?></th>
+							<td><?php echo esc_html( $this->get_last_changed_text( $options ) ); ?></td>
+						</tr>
 					</tbody>
 				</table>
 
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="max-width: 900px; margin-top: 20px;">
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="max-width: 1000px; margin-top: 20px;">
 					<input type="hidden" name="action" value="bloglogistics_csr_save" />
 					<?php wp_nonce_field( 'bloglogistics_csr_save', 'bloglogistics_csr_nonce' ); ?>
 
-					<h2><?php esc_html_e( 'Settings', 'bloglogistics-content-signals-robots' ); ?></h2>
+					<h2><?php esc_html_e( 'Website-use preferences', 'bloglogistics-content-signals-robots' ); ?></h2>
 
 					<table class="form-table" role="presentation">
 						<tbody>
 							<tr>
-								<th scope="row"><?php esc_html_e( 'Manage robots.txt preferences', 'bloglogistics-content-signals-robots' ); ?></th>
+								<th scope="row"><?php esc_html_e( 'Use this plugin to manage robots.txt', 'bloglogistics-content-signals-robots' ); ?></th>
 								<td>
 									<label>
 										<input type="checkbox" name="bloglogistics_csr_enabled" value="1" <?php checked( ! empty( $options['enabled'] ) ); ?> />
-										<?php esc_html_e( 'Let this plugin manage website-use preferences in robots.txt.', 'bloglogistics-content-signals-robots' ); ?>
+										<?php esc_html_e( 'Manage website-use preferences in robots.txt.', 'bloglogistics-content-signals-robots' ); ?>
 									</label>
 									<p class="description"><?php esc_html_e( 'Turn this on to let this plugin add or update the preference line in your physical robots.txt file. Turn it off to restore the original preference line, or remove it if there was not one before.', 'bloglogistics-content-signals-robots' ); ?></p>
 								</td>
@@ -293,10 +305,7 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 					<p class="description"><?php esc_html_e( 'This is the technical line added to robots.txt based on your choices above.', 'bloglogistics-content-signals-robots' ); ?></p>
 					<p><code><?php echo esc_html( $line_preview ); ?></code></p>
 
-					<h2><?php esc_html_e( 'Backups', 'bloglogistics-content-signals-robots' ); ?></h2>
-					<p><?php esc_html_e( 'Before changing robots.txt, this plugin saves a backup copy. The plugin keeps the latest 5 backups so you can recover from mistakes without filling your server with old files.', 'bloglogistics-content-signals-robots' ); ?></p>
-
-					<?php submit_button( esc_html__( 'Save Changes', 'bloglogistics-content-signals-robots' ) ); ?>
+					<?php submit_button( esc_html__( 'Save Preferences', 'bloglogistics-content-signals-robots' ) ); ?>
 				</form>
 
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top: 10px;">
@@ -305,7 +314,62 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 					<?php submit_button( esc_html__( 'Restore recommended defaults', 'bloglogistics-content-signals-robots' ), 'secondary', 'submit', false ); ?>
 					<p class="description"><?php esc_html_e( 'This turns search results and AI answers on, and AI training off.', 'bloglogistics-content-signals-robots' ); ?></p>
 				</form>
+
+				<h2 style="margin-top: 30px;"><?php esc_html_e( 'Full robots.txt editor', 'bloglogistics-content-signals-robots' ); ?></h2>
+				<p><?php esc_html_e( 'Use this only when you need to review or manually edit the full robots.txt file. A broken robots.txt file can affect how search engines and crawlers access your site.', 'bloglogistics-content-signals-robots' ); ?></p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="max-width: 1000px;">
+					<input type="hidden" name="action" value="bloglogistics_csr_save_editor" />
+					<?php wp_nonce_field( 'bloglogistics_csr_save_editor', 'bloglogistics_csr_editor_nonce' ); ?>
+					<textarea name="bloglogistics_csr_robots_contents" rows="18" class="large-text code" <?php disabled( ! $file_readable || ! $file_writable ); ?>><?php echo esc_textarea( $robots_content ); ?></textarea>
+					<p class="description"><?php esc_html_e( 'If you manually change the preference line under User-agent: *, the toggle boxes above will update to match after saving.', 'bloglogistics-content-signals-robots' ); ?></p>
+					<?php submit_button( esc_html__( 'Save full robots.txt', 'bloglogistics-content-signals-robots' ), 'secondary' ); ?>
+				</form>
+
+				<h2><?php esc_html_e( 'Backups', 'bloglogistics-content-signals-robots' ); ?></h2>
+				<p><?php esc_html_e( 'Before changing robots.txt, this plugin saves a backup copy. The plugin keeps the latest 5 backups so you can recover from mistakes without filling your server with old files.', 'bloglogistics-content-signals-robots' ); ?></p>
+				<?php $this->render_backups_table( $backups ); ?>
+
+				<p class="description"><?php esc_html_e( 'If this plugin is deleted, its saved settings and backup files are removed. Your current robots.txt file is left as-is.', 'bloglogistics-content-signals-robots' ); ?></p>
 			</div>
+			<?php
+		}
+
+		/**
+		 * Render available backups table.
+		 *
+		 * @param array<int,array{path:string,basename:string,time:int}> $backups Backups.
+		 */
+		private function render_backups_table( array $backups ): void {
+			if ( empty( $backups ) ) {
+				?>
+				<p><?php esc_html_e( 'No backups are available yet.', 'bloglogistics-content-signals-robots' ); ?></p>
+				<?php
+				return;
+			}
+			?>
+			<table class="widefat striped" style="max-width: 1000px;">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'Backup date and time', 'bloglogistics-content-signals-robots' ); ?></th>
+						<th><?php esc_html_e( 'Action', 'bloglogistics-content-signals-robots' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $backups as $backup ) : ?>
+						<tr>
+							<td><?php echo esc_html( $this->format_gmt_timestamp( $backup['time'] ) ); ?></td>
+							<td>
+								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" onsubmit="return confirm('<?php echo esc_js( __( 'Restore this backup? The current robots.txt file will be backed up first.', 'bloglogistics-content-signals-robots' ) ); ?>');">
+									<input type="hidden" name="action" value="bloglogistics_csr_restore_backup" />
+									<input type="hidden" name="bloglogistics_csr_backup" value="<?php echo esc_attr( $backup['basename'] ); ?>" />
+									<?php wp_nonce_field( 'bloglogistics_csr_restore_backup', 'bloglogistics_csr_restore_backup_nonce' ); ?>
+									<?php submit_button( esc_html__( 'Restore', 'bloglogistics-content-signals-robots' ), 'secondary', 'submit', false ); ?>
+								</form>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
 			<?php
 		}
 
@@ -320,12 +384,17 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 			$messages = array(
 				'updated'          => array( 'success', __( 'Settings saved. robots.txt was updated and a backup was created.', 'bloglogistics-content-signals-robots' ) ),
 				'updated_cleaned'  => array( 'success', __( 'Settings saved. robots.txt was updated, a backup was created, and older backups were cleaned up. The latest 5 backups are kept.', 'bloglogistics-content-signals-robots' ) ),
+				'editor_updated'   => array( 'success', __( 'robots.txt was saved, a backup was created, and the settings were updated to match the saved file.', 'bloglogistics-content-signals-robots' ) ),
+				'editor_cleaned'   => array( 'success', __( 'robots.txt was saved, a backup was created, older backups were cleaned up, and the settings were updated to match the saved file.', 'bloglogistics-content-signals-robots' ) ),
+				'backup_restored'  => array( 'success', __( 'The selected backup was restored. The settings were updated to match the restored file.', 'bloglogistics-content-signals-robots' ) ),
+				'backup_cleaned'   => array( 'success', __( 'The selected backup was restored. Older backups were cleaned up. The latest 5 backups are kept.', 'bloglogistics-content-signals-robots' ) ),
 				'no_change'        => array( 'success', __( 'Settings saved. robots.txt already matched these settings, so no file change was needed.', 'bloglogistics-content-signals-robots' ) ),
 				'defaults'         => array( 'success', __( 'Recommended defaults restored.', 'bloglogistics-content-signals-robots' ) ),
 				'missing'          => array( 'error', __( 'No physical robots.txt file was found. This plugin is intended for sites with a real robots.txt file.', 'bloglogistics-content-signals-robots' ) ),
 				'unreadable'       => array( 'error', __( 'robots.txt exists, but this plugin could not read it.', 'bloglogistics-content-signals-robots' ) ),
 				'unwritable'       => array( 'error', __( 'robots.txt exists, but this plugin could not write to it. Please check file permissions.', 'bloglogistics-content-signals-robots' ) ),
 				'backup_failed'    => array( 'error', __( 'A backup could not be created, so robots.txt was not changed.', 'bloglogistics-content-signals-robots' ) ),
+				'backup_missing'   => array( 'error', __( 'The selected backup could not be found.', 'bloglogistics-content-signals-robots' ) ),
 				'write_failed'     => array( 'error', __( 'robots.txt could not be updated.', 'bloglogistics-content-signals-robots' ) ),
 				'permission_error' => array( 'error', __( 'You do not have permission to change these settings.', 'bloglogistics-content-signals-robots' ) ),
 			);
@@ -362,6 +431,32 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 		}
 
 		/**
+		 * Get last changed text.
+		 *
+		 * @param array<string,mixed> $options Options.
+		 */
+		private function get_last_changed_text( array $options ): string {
+			if ( empty( $options['last_changed_gmt'] ) ) {
+				return __( 'Not yet changed by this plugin.', 'bloglogistics-content-signals-robots' );
+			}
+
+			$timestamp = strtotime( (string) $options['last_changed_gmt'] . ' UTC' );
+
+			if ( false === $timestamp ) {
+				return __( 'Not yet changed by this plugin.', 'bloglogistics-content-signals-robots' );
+			}
+
+			return $this->format_gmt_timestamp( $timestamp );
+		}
+
+		/**
+		 * Format a GMT timestamp for the site timezone.
+		 */
+		private function format_gmt_timestamp( int $timestamp ): string {
+			return wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp );
+		}
+
+		/**
 		 * Save settings and update robots.txt.
 		 */
 		public function handle_save(): void {
@@ -379,7 +474,7 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 			$new_options['allow_ai_answers']  = ! empty( $_POST['bloglogistics_csr_allow_ai_answers'] );
 			$new_options['allow_ai_training'] = ! empty( $_POST['bloglogistics_csr_allow_ai_training'] );
 
-			$result = $this->apply_preferences( $new_options );
+			$result = $this->apply_preferences( $new_options, 'settings' );
 
 			if ( ! in_array( $result['status'], array( 'missing', 'unreadable', 'unwritable', 'backup_failed', 'write_failed' ), true ) ) {
 				update_option( self::OPTION_NAME, $result['options'] );
@@ -411,13 +506,131 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 				)
 			);
 
-			$result = $this->apply_preferences( $new_options );
+			$result = $this->apply_preferences( $new_options, 'recommended defaults' );
 
 			if ( ! in_array( $result['status'], array( 'missing', 'unreadable', 'unwritable', 'backup_failed', 'write_failed' ), true ) ) {
 				update_option( self::OPTION_NAME, $result['options'] );
 			}
-
 			$this->redirect_with_message( 'no_change' === $result['status'] ? 'defaults' : $result['status'] );
+		}
+
+		/**
+		 * Save the full robots.txt editor contents and sync settings from the saved file.
+		 */
+		public function handle_save_editor(): void {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				$this->redirect_with_message( 'permission_error' );
+			}
+
+			check_admin_referer( 'bloglogistics_csr_save_editor', 'bloglogistics_csr_editor_nonce' );
+
+			$robots_path = $this->get_robots_path();
+
+			if ( ! file_exists( $robots_path ) ) {
+				$this->redirect_with_message( 'missing' );
+			}
+
+			if ( ! is_readable( $robots_path ) ) {
+				$this->redirect_with_message( 'unreadable' );
+			}
+
+			if ( ! is_writable( $robots_path ) ) {
+				$this->redirect_with_message( 'unwritable' );
+			}
+
+			$current_contents = file_get_contents( $robots_path );
+
+			if ( false === $current_contents ) {
+				$this->redirect_with_message( 'unreadable' );
+			}
+
+			$new_contents = isset( $_POST['bloglogistics_csr_robots_contents'] ) ? wp_unslash( $_POST['bloglogistics_csr_robots_contents'] ) : '';
+			$new_contents = str_replace( array( "\r\n", "\r" ), "\n", (string) $new_contents );
+
+			if ( $new_contents === $current_contents ) {
+				$options = $this->sync_options_from_contents( $this->get_options(), $current_contents );
+				update_option( self::OPTION_NAME, $options );
+				$this->redirect_with_message( 'no_change' );
+			}
+
+			if ( ! $this->create_backup( $robots_path, $current_contents ) ) {
+				$this->redirect_with_message( 'backup_failed' );
+			}
+
+			$bytes_written = file_put_contents( $robots_path, $new_contents, LOCK_EX );
+
+			if ( false === $bytes_written ) {
+				$this->redirect_with_message( 'write_failed' );
+			}
+
+			$options                       = $this->sync_options_from_contents( $this->get_options(), $new_contents );
+			$options['last_changed_gmt']    = gmdate( 'Y-m-d H:i:s' );
+			$options['last_changed_reason'] = 'full editor';
+			update_option( self::OPTION_NAME, $options );
+
+			$cleaned = $this->cleanup_backups( $robots_path );
+			$this->redirect_with_message( $cleaned ? 'editor_cleaned' : 'editor_updated' );
+		}
+
+		/**
+		 * Restore a selected backup.
+		 */
+		public function handle_restore_backup(): void {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				$this->redirect_with_message( 'permission_error' );
+			}
+
+			check_admin_referer( 'bloglogistics_csr_restore_backup', 'bloglogistics_csr_restore_backup_nonce' );
+
+			$robots_path = $this->get_robots_path();
+			$basename    = isset( $_POST['bloglogistics_csr_backup'] ) ? sanitize_file_name( wp_unslash( $_POST['bloglogistics_csr_backup'] ) ) : '';
+
+			if ( '' === $basename || ! $this->is_backup_basename( $basename ) ) {
+				$this->redirect_with_message( 'backup_missing' );
+			}
+
+			$backup_path = dirname( $robots_path ) . DIRECTORY_SEPARATOR . $basename;
+
+			if ( ! is_file( $backup_path ) || ! is_readable( $backup_path ) ) {
+				$this->redirect_with_message( 'backup_missing' );
+			}
+
+			if ( ! file_exists( $robots_path ) ) {
+				$this->redirect_with_message( 'missing' );
+			}
+
+			if ( ! is_readable( $robots_path ) ) {
+				$this->redirect_with_message( 'unreadable' );
+			}
+
+			if ( ! is_writable( $robots_path ) ) {
+				$this->redirect_with_message( 'unwritable' );
+			}
+
+			$current_contents = file_get_contents( $robots_path );
+			$backup_contents  = file_get_contents( $backup_path );
+
+			if ( false === $current_contents || false === $backup_contents ) {
+				$this->redirect_with_message( 'unreadable' );
+			}
+
+			if ( ! $this->create_backup( $robots_path, $current_contents ) ) {
+				$this->redirect_with_message( 'backup_failed' );
+			}
+
+			$bytes_written = file_put_contents( $robots_path, $backup_contents, LOCK_EX );
+
+			if ( false === $bytes_written ) {
+				$this->redirect_with_message( 'write_failed' );
+			}
+
+			$options                       = $this->sync_options_from_contents( $this->get_options(), $backup_contents );
+			$options['last_changed_gmt']    = gmdate( 'Y-m-d H:i:s' );
+			$options['last_changed_reason'] = 'backup restore';
+			update_option( self::OPTION_NAME, $options );
+
+			$cleaned = $this->cleanup_backups( $robots_path );
+			$this->redirect_with_message( $cleaned ? 'backup_cleaned' : 'backup_restored' );
 		}
 
 		/**
@@ -427,8 +640,8 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 			wp_safe_redirect(
 				add_query_arg(
 					array(
-						'page'                       => 'bloglogistics-content-signals-robots',
-						'bloglogistics_csr_message'  => $message,
+						'page'                      => 'bloglogistics-content-signals-robots',
+						'bloglogistics_csr_message' => $message,
 					),
 					admin_url( 'admin.php' )
 				)
@@ -442,7 +655,7 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 		 * @param array<string, mixed> $options Options to apply.
 		 * @return array{status:string, options:array<string, mixed>}
 		 */
-		private function apply_preferences( array $options ): array {
+		private function apply_preferences( array $options, string $reason = 'settings' ): array {
 			$robots_path = $this->get_robots_path();
 
 			if ( ! file_exists( $robots_path ) ) {
@@ -487,6 +700,9 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 				return array( 'status' => 'write_failed', 'options' => $options );
 			}
 
+			$options['last_changed_gmt']    = gmdate( 'Y-m-d H:i:s' );
+			$options['last_changed_reason'] = $reason;
+
 			$cleaned = $this->cleanup_backups( $robots_path );
 
 			return array( 'status' => $cleaned ? 'updated_cleaned' : 'updated', 'options' => $options );
@@ -528,6 +744,41 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 		}
 
 		/**
+		 * Sync options from the Content-Signal line currently found in robots.txt.
+		 *
+		 * @param array<string,mixed> $options Options.
+		 * @return array<string,mixed>
+		 */
+		private function sync_options_from_contents( array $options, string $contents ): array {
+			$line = $this->find_signal_line_in_user_agent_star( $contents );
+
+			if ( null === $line ) {
+				$options['enabled'] = false;
+				return $options;
+			}
+
+			$options['enabled']           = true;
+			$options['allow_search']      = $this->signal_value_is_yes( $line, 'search' );
+			$options['allow_ai_answers']  = $this->signal_value_is_yes( $line, 'ai-input' );
+			$options['allow_ai_training'] = $this->signal_value_is_yes( $line, 'ai-train' );
+
+			return $options;
+		}
+
+		/**
+		 * Check whether a Content-Signal value is yes.
+		 */
+		private function signal_value_is_yes( string $line, string $key ): bool {
+			$pattern = '/(?:^|[,\s])' . preg_quote( $key, '/' ) . '\s*=\s*(yes|no)\b/i';
+
+			if ( preg_match( $pattern, $line, $matches ) ) {
+				return 'yes' === strtolower( $matches[1] );
+			}
+
+			return false;
+		}
+
+		/**
 		 * Update robots.txt contents.
 		 *
 		 * @param string              $contents robots.txt contents.
@@ -561,10 +812,14 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 		/**
 		 * Find the first User-agent: * group.
 		 *
-		 * @param array<int,string> $lines Lines.
+		 * @param array<int,string>|false $lines Lines.
 		 * @return array{0:int,1:int}|null Start line and exclusive group end.
 		 */
-		private function find_user_agent_star_location( array $lines ): ?array {
+		private function find_user_agent_star_location( $lines ): ?array {
+			if ( ! is_array( $lines ) ) {
+				return null;
+			}
+
 			$count = count( $lines );
 
 			for ( $i = 0; $i < $count; $i++ ) {
@@ -675,33 +930,108 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 		 * Create a timestamped backup.
 		 */
 		private function create_backup( string $robots_path, string $contents ): bool {
-			$backup_path = $robots_path . '.bloglogistics-backup-' . gmdate( 'Ymd-His' );
+			$backup_path = $robots_path . self::BACKUP_PREFIX_NEW . gmdate( 'Ymd-His' );
 			$result      = file_put_contents( $backup_path, $contents, LOCK_EX );
 
 			return false !== $result;
 		}
 
 		/**
+		 * Get available backups.
+		 *
+		 * @return array<int,array{path:string,basename:string,time:int}>
+		 */
+		private function get_backups( string $robots_path ): array {
+			$files = array_merge(
+				glob( $robots_path . self::BACKUP_PREFIX_NEW . '*' ) ?: array(),
+				glob( $robots_path . self::BACKUP_PREFIX_OLD . '*' ) ?: array()
+			);
+
+			$backups = array();
+
+			foreach ( $files as $file ) {
+				if ( ! is_file( $file ) ) {
+					continue;
+				}
+
+				$backups[] = array(
+					'path'     => $file,
+					'basename' => basename( $file ),
+					'time'     => (int) filemtime( $file ),
+				);
+			}
+
+			usort(
+				$backups,
+				static function ( array $a, array $b ): int {
+					return $b['time'] <=> $a['time'];
+				}
+			);
+
+			return array_slice( $backups, 0, self::MAX_BACKUPS );
+		}
+
+		/**
+		 * Check whether a backup basename belongs to this plugin.
+		 */
+		private function is_backup_basename( string $basename ): bool {
+			return 1 === preg_match( '/^robots\.txt\.bloglogistics(?:-content-signals)?-backup-\d{8}-\d{6}$/', $basename );
+		}
+
+		/**
 		 * Keep only the most recent backups.
 		 */
 		private function cleanup_backups( string $robots_path ): bool {
-			$pattern = $robots_path . '.bloglogistics-backup-*';
-			$files   = glob( $pattern );
+			$all_backups = $this->get_backups_without_limit( $robots_path );
 
-			if ( false === $files || count( $files ) <= self::MAX_BACKUPS ) {
+			if ( count( $all_backups ) <= self::MAX_BACKUPS ) {
 				return false;
 			}
 
-			rsort( $files, SORT_STRING );
 			$removed = false;
 
-			foreach ( array_slice( $files, self::MAX_BACKUPS ) as $old_backup ) {
-				if ( is_file( $old_backup ) && @unlink( $old_backup ) ) {
+			foreach ( array_slice( $all_backups, self::MAX_BACKUPS ) as $backup ) {
+				if ( is_file( $backup['path'] ) && @unlink( $backup['path'] ) ) {
 					$removed = true;
 				}
 			}
 
 			return $removed;
+		}
+
+		/**
+		 * Get all backups without limit.
+		 *
+		 * @return array<int,array{path:string,basename:string,time:int}>
+		 */
+		private function get_backups_without_limit( string $robots_path ): array {
+			$files = array_merge(
+				glob( $robots_path . self::BACKUP_PREFIX_NEW . '*' ) ?: array(),
+				glob( $robots_path . self::BACKUP_PREFIX_OLD . '*' ) ?: array()
+			);
+
+			$backups = array();
+
+			foreach ( $files as $file ) {
+				if ( ! is_file( $file ) ) {
+					continue;
+				}
+
+				$backups[] = array(
+					'path'     => $file,
+					'basename' => basename( $file ),
+					'time'     => (int) filemtime( $file ),
+				);
+			}
+
+			usort(
+				$backups,
+				static function ( array $a, array $b ): int {
+					return $b['time'] <=> $a['time'];
+				}
+			);
+
+			return $backups;
 		}
 	}
 }
