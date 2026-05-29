@@ -3,7 +3,7 @@
  * Plugin Name:       BlogLogistics Content Signals for Robots.txt
  * Plugin URI:        https://github.com/bloglogisticsdev/bloglogistics-content-signals-robots
  * Description:       Safely manages website-use preference signals in a physical robots.txt file.
- * Version:           1.0.1
+ * Version:           1.0.2
  * Requires at least: 7.0
  * Requires PHP:      8.3
  * Author:            BlogLogistics
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BLOGLOGISTICS_CSR_VERSION', '1.0.1' );
+define( 'BLOGLOGISTICS_CSR_VERSION', '1.0.2' );
 define( 'BLOGLOGISTICS_CSR_SLUG', 'bloglogistics-content-signals-robots' );
 define( 'BLOGLOGISTICS_CSR_FILE', __FILE__ );
 define( 'BLOGLOGISTICS_CSR_DIR', plugin_dir_path( __FILE__ ) );
@@ -357,9 +357,9 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 				<tbody>
 					<?php foreach ( $backups as $backup ) : ?>
 						<tr>
-							<td><?php echo esc_html( $this->format_gmt_timestamp( $backup['time'] ) ); ?></td>
+							<td><?php echo esc_html( $this->format_backup_timestamp( $backup['time'] ) ); ?></td>
 							<td>
-								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" onsubmit="return confirm('<?php echo esc_js( __( 'Restore this backup? The current robots.txt file will be backed up first.', 'bloglogistics-content-signals-robots' ) ); ?>');">
+								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" onsubmit="return confirm('<?php echo esc_js( __( 'Restore this backup? This will replace the current robots.txt file with the selected backup. No new backup will be created during restore.', 'bloglogistics-content-signals-robots' ) ); ?>');">
 									<input type="hidden" name="action" value="bloglogistics_csr_restore_backup" />
 									<input type="hidden" name="bloglogistics_csr_backup" value="<?php echo esc_attr( $backup['basename'] ); ?>" />
 									<?php wp_nonce_field( 'bloglogistics_csr_restore_backup', 'bloglogistics_csr_restore_backup_nonce' ); ?>
@@ -387,7 +387,6 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 				'editor_updated'   => array( 'success', __( 'robots.txt was saved, a backup was created, and the settings were updated to match the saved file.', 'bloglogistics-content-signals-robots' ) ),
 				'editor_cleaned'   => array( 'success', __( 'robots.txt was saved, a backup was created, older backups were cleaned up, and the settings were updated to match the saved file.', 'bloglogistics-content-signals-robots' ) ),
 				'backup_restored'  => array( 'success', __( 'The selected backup was restored. The settings were updated to match the restored file.', 'bloglogistics-content-signals-robots' ) ),
-				'backup_cleaned'   => array( 'success', __( 'The selected backup was restored. Older backups were cleaned up. The latest 5 backups are kept.', 'bloglogistics-content-signals-robots' ) ),
 				'no_change'        => array( 'success', __( 'Settings saved. robots.txt already matched these settings, so no file change was needed.', 'bloglogistics-content-signals-robots' ) ),
 				'defaults'         => array( 'success', __( 'Recommended defaults restored.', 'bloglogistics-content-signals-robots' ) ),
 				'missing'          => array( 'error', __( 'No physical robots.txt file was found. This plugin is intended for sites with a real robots.txt file.', 'bloglogistics-content-signals-robots' ) ),
@@ -454,6 +453,13 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 		 */
 		private function format_gmt_timestamp( int $timestamp ): string {
 			return wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp );
+		}
+
+		/**
+		 * Format a backup timestamp with seconds so backups created close together are easier to tell apart.
+		 */
+		private function format_backup_timestamp( int $timestamp ): string {
+			return wp_date( get_option( 'date_format' ) . ' H:i:s', $timestamp );
 		}
 
 		/**
@@ -607,15 +613,10 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 				$this->redirect_with_message( 'unwritable' );
 			}
 
-			$current_contents = file_get_contents( $robots_path );
-			$backup_contents  = file_get_contents( $backup_path );
+			$backup_contents = file_get_contents( $backup_path );
 
-			if ( false === $current_contents || false === $backup_contents ) {
+			if ( false === $backup_contents ) {
 				$this->redirect_with_message( 'unreadable' );
-			}
-
-			if ( ! $this->create_backup( $robots_path, $current_contents ) ) {
-				$this->redirect_with_message( 'backup_failed' );
 			}
 
 			$bytes_written = file_put_contents( $robots_path, $backup_contents, LOCK_EX );
@@ -629,8 +630,7 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 			$options['last_changed_reason'] = 'backup restore';
 			update_option( self::OPTION_NAME, $options );
 
-			$cleaned = $this->cleanup_backups( $robots_path );
-			$this->redirect_with_message( $cleaned ? 'backup_cleaned' : 'backup_restored' );
+			$this->redirect_with_message( 'backup_restored' );
 		}
 
 		/**
@@ -930,8 +930,16 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 		 * Create a timestamped backup.
 		 */
 		private function create_backup( string $robots_path, string $contents ): bool {
-			$backup_path = $robots_path . self::BACKUP_PREFIX_NEW . gmdate( 'Ymd-His' );
-			$result      = file_put_contents( $backup_path, $contents, LOCK_EX );
+			$base_backup_path = $robots_path . self::BACKUP_PREFIX_NEW . gmdate( 'Ymd-His' );
+			$backup_path      = $base_backup_path;
+			$counter          = 1;
+
+			while ( file_exists( $backup_path ) ) {
+				$backup_path = $base_backup_path . '-' . $counter;
+				$counter++;
+			}
+
+			$result = file_put_contents( $backup_path, $contents, LOCK_EX );
 
 			return false !== $result;
 		}
@@ -975,7 +983,7 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 		 * Check whether a backup basename belongs to this plugin.
 		 */
 		private function is_backup_basename( string $basename ): bool {
-			return 1 === preg_match( '/^robots\.txt\.bloglogistics(?:-content-signals)?-backup-\d{8}-\d{6}$/', $basename );
+			return 1 === preg_match( '/^robots\.txt\.bloglogistics(?:-content-signals)?-backup-\d{8}-\d{6}(?:-\d+)?$/', $basename );
 		}
 
 		/**
