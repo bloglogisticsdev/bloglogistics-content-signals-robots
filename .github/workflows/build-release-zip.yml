@@ -123,6 +123,11 @@ jobs:
               "tested": "7.0",
               "requires_php": "8.3",
               "last_updated": last_updated,
+              "icons": {
+                  "1x": "https://updates.bloglogistics.com/plugins/assets/icon-128x128.png",
+                  "2x": "https://updates.bloglogistics.com/plugins/assets/icon-256x256.png",
+                  "default": "https://updates.bloglogistics.com/plugins/assets/icon-128x128.png",
+              },
               "sections": {
                   "description": "Safely manages website-use preference signals in a physical robots.txt file.",
                   "changelog": changelog_html,
