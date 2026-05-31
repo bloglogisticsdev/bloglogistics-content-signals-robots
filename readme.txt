@@ -4,7 +4,7 @@ Tags: robots.txt, content signal, ai, search, crawlers
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 8.3
-Stable tag: 1.0.6
+Stable tag: 1.0.7
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -83,6 +83,11 @@ Yes. The settings page lists the latest available backups with restore buttons. 
 The plugin removes its saved settings and plugin-created backup files. Your current robots.txt file is left as-is.
 
 == Changelog ==
+
+= 1.0.7 =
+* Add banner metadata to the generated update manifest.
+* Keep icon metadata in the generated update manifest.
+* Use the shared BlogLogistics update-server banner URLs for WordPress plugin details screens.
 
 = 1.0.6 =
 * Add BlogLogistics plugin icon assets.
