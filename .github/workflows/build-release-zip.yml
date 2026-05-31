@@ -123,6 +123,8 @@ jobs:
               "tested": "7.0",
               "requires_php": "8.3",
               "last_updated": last_updated,
+              "author": '<a href="https://www.bloglogistics.com" target="_blank" rel="noopener noreferrer">BlogLogistics</a>',
+              "author_profile": "https://www.bloglogistics.com",
               "icons": {
                   "1x": "https://updates.bloglogistics.com/plugins/assets/icon-128x128.png",
                   "2x": "https://updates.bloglogistics.com/plugins/assets/icon-256x256.png",
@@ -135,6 +137,8 @@ jobs:
               },
               "sections": {
                   "description": "Safely manages website-use preference signals in a physical robots.txt file.",
+                  "installation": '<ol><li>Install and activate the plugin.</li><li>Go to <strong>BlogLogistics &gt; Robots.txt Content Preferences</strong>.</li><li>Confirm that a physical <code>robots.txt</code> file was found.</li><li>Choose the website-use preferences you want to publish.</li><li>Save your changes. The plugin updates only the managed preference line under <code>User-agent: *</code>.</li></ol>',
+                  "faq": '<h4>Does this plugin rewrite my whole robots.txt file?</h4><p>No. It only manages the Content-Signal line under <code>User-agent: *</code> and leaves the rest of the file alone.</p><h4>Does this plugin work without a physical robots.txt file?</h4><p>This plugin is intended for sites that already use a physical <code>robots.txt</code> file. If no physical file is found, the settings page explains that the plugin cannot manage it automatically.</p><h4>What happens if I turn management off?</h4><p>If there was an original Content-Signal line, the plugin restores it. If there was no original Content-Signal line, the managed line is removed.</p><h4>Why does the plugin save backups?</h4><p>Before changing <code>robots.txt</code>, this plugin saves a backup copy. The plugin keeps the latest 5 backups so you can recover from mistakes without filling your server with old files.</p><h4>Can I manually edit robots.txt?</h4><p>Yes. The settings page includes a full <code>robots.txt</code> editor. If you manually change the Content-Signal line under <code>User-agent: *</code>, the toggle boxes update to match after saving.</p><h4>What happens if I delete the plugin?</h4><p>The plugin removes its saved settings and plugin-created backup files. Your current <code>robots.txt</code> file is left as-is.</p>',
                   "changelog": changelog_html,
               },
           }
