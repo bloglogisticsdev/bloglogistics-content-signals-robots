@@ -1,0 +1,194 @@
+msgid ""
+msgstr "Project-Id-Version: BlogLogistics Content Signals for Robots.txt 1.1.0\\nReport-Msgid-Bugs-To: https://www.bloglogistics.com/\\nPOT-Creation-Date: 2026-06-01 21:06+0000\\nPO-Revision-Date: 2026-06-01 21:06+0000\\nLast-Translator: BlogLogistics <support@bloglogistics.com>\\nLanguage-Team: English Australia\\nMIME-Version: 1.0\\nContent-Type: text/plain; charset=UTF-8\\nContent-Transfer-Encoding: 8bit\\nLanguage: en_AU\\nX-Domain: bloglogistics-content-signals-robots\\n"
+
+msgid "Robots.txt Content Preferences"
+msgstr "Robots.txt Content Preferences"
+
+msgid "BlogLogistics"
+msgstr "BlogLogistics"
+
+msgid "Use the submenu links to configure installed BlogLogistics plugins."
+msgstr "Use the submenu links to configure installed BlogLogistics plugins."
+
+msgid "This plugin updates one line in your physical robots.txt file. It does not rewrite the whole file. It only manages the preference line placed directly under User-agent: *."
+msgstr "This plugin updates one line in your physical robots.txt file. It does not rewrite the whole file. It only manages the preference line placed directly under User-agent: *."
+
+msgid "These settings publish your website’s preferences in robots.txt. They do not guarantee that every crawler, search engine, or AI system will follow them."
+msgstr "These settings publish your website’s preferences in robots.txt. They do not guarantee that every crawler, search engine, or AI system will follow them."
+
+msgid "robots.txt file status"
+msgstr "robots.txt file status"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Last changed by this plugin"
+msgstr "Last changed by this plugin"
+
+msgid "Website-use preferences"
+msgstr "Website-use preferences"
+
+msgid "Use this plugin to manage robots.txt"
+msgstr "Use this plugin to manage robots.txt"
+
+msgid "Manage website-use preferences in robots.txt."
+msgstr "Manage website-use preferences in robots.txt."
+
+msgid "Turn this on to let this plugin add or update the preference line in your physical robots.txt file. Turn it off to restore the original preference line, or remove it if there was not one before."
+msgstr "Turn this on to let this plugin add or update the preference line in your physical robots.txt file. Turn it off to restore the original preference line, or remove it if there was not one before."
+
+msgid "Search results"
+msgstr "Search results"
+
+msgid "Allow search engines to show this site in search results."
+msgstr "Allow search engines to show this site in search results."
+
+msgid "Recommended: On. This allows normal search engines to include the site in search results."
+msgstr "Recommended: On. This allows normal search engines to include the site in search results."
+
+msgid "AI answers"
+msgstr "AI answers"
+
+msgid "Allow AI tools to use this site when answering users."
+msgstr "Allow AI tools to use this site when answering users."
+
+msgid "Recommended: On. This allows AI tools to use the site as a source when answering questions."
+msgstr "Recommended: On. This allows AI tools to use the site as a source when answering questions."
+
+msgid "AI training"
+msgstr "AI training"
+
+msgid "Allow AI companies to use this site for AI training."
+msgstr "Allow AI companies to use this site for AI training."
+
+msgid "Recommended: Off. This tells AI companies that the site should not be used to train AI models."
+msgstr "Recommended: Off. This tells AI companies that the site should not be used to train AI models."
+
+msgid "Recommended default:"
+msgstr "Recommended default:"
+
+msgid "Search results: On. AI answers: On. AI training: Off."
+msgstr "Search results: On. AI answers: On. AI training: Off."
+
+msgid "robots.txt line that will be used"
+msgstr "robots.txt line that will be used"
+
+msgid "This is the technical line added to robots.txt based on your choices above."
+msgstr "This is the technical line added to robots.txt based on your choices above."
+
+msgid "Save Preferences"
+msgstr "Save Preferences"
+
+msgid "No changes to save."
+msgstr "No changes to save."
+
+msgid "Restore recommended defaults"
+msgstr "Restore recommended defaults"
+
+msgid "This turns search results and AI answers on, and AI training off."
+msgstr "This turns search results and AI answers on, and AI training off."
+
+msgid "Full robots.txt editor"
+msgstr "Full robots.txt editor"
+
+msgid "Use this only when you need to review or manually edit the full robots.txt file. A broken robots.txt file can affect how search engines and crawlers access your site."
+msgstr "Use this only when you need to review or manually edit the full robots.txt file. A broken robots.txt file can affect how search engines and crawlers access your site."
+
+msgid "If you manually change the preference line under User-agent: *, the toggle boxes above will update to match after saving."
+msgstr "If you manually change the preference line under User-agent: *, the toggle boxes above will update to match after saving."
+
+msgid "Save full robots.txt"
+msgstr "Save full robots.txt"
+
+msgid "Backups"
+msgstr "Backups"
+
+msgid "Before changing robots.txt, this plugin saves a backup copy. The plugin keeps the latest 5 backups so you can recover from mistakes without filling your server with old files."
+msgstr "Before changing robots.txt, this plugin saves a backup copy. The plugin keeps the latest 5 backups so you can recover from mistakes without filling your server with old files."
+
+msgid "If this plugin is deleted, its saved settings and backup files are removed. Your current robots.txt file is left as-is."
+msgstr "If this plugin is deleted, its saved settings and backup files are removed. Your current robots.txt file is left as-is."
+
+msgid "No backups are available yet."
+msgstr "No backups are available yet."
+
+msgid "Backup date and time"
+msgstr "Backup date and time"
+
+msgid "Action"
+msgstr "Action"
+
+msgid "Restore"
+msgstr "Restore"
+
+msgid "Confirm backup restore"
+msgstr "Confirm backup restore"
+
+msgid "You are about to restore this backup:"
+msgstr "You are about to restore this backup:"
+
+msgid "This will replace the current robots.txt file with the selected backup. No new backup will be created during restore."
+msgstr "This will replace the current robots.txt file with the selected backup. No new backup will be created during restore."
+
+msgid "Yes, restore this backup"
+msgstr "Yes, restore this backup"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Settings saved. robots.txt was updated and a backup was created."
+msgstr "Settings saved. robots.txt was updated and a backup was created."
+
+msgid "Settings saved. robots.txt was updated, a backup was created, and older backups were cleaned up. The latest 5 backups are kept."
+msgstr "Settings saved. robots.txt was updated, a backup was created, and older backups were cleaned up. The latest 5 backups are kept."
+
+msgid "robots.txt was saved, a backup was created, and the settings were updated to match the saved file."
+msgstr "robots.txt was saved, a backup was created, and the settings were updated to match the saved file."
+
+msgid "robots.txt was saved, a backup was created, older backups were cleaned up, and the settings were updated to match the saved file."
+msgstr "robots.txt was saved, a backup was created, older backups were cleaned up, and the settings were updated to match the saved file."
+
+msgid "The selected backup was restored. The settings were updated to match the restored file."
+msgstr "The selected backup was restored. The settings were updated to match the restored file."
+
+msgid "No changes were made because robots.txt already matched the submitted settings."
+msgstr "No changes were made because robots.txt already matched the submitted settings."
+
+msgid "Recommended defaults restored."
+msgstr "Recommended defaults restored."
+
+msgid "No physical robots.txt file was found. This plugin is intended for sites with a real robots.txt file."
+msgstr "No physical robots.txt file was found. This plugin is intended for sites with a real robots.txt file."
+
+msgid "robots.txt exists, but this plugin could not read it."
+msgstr "robots.txt exists, but this plugin could not read it."
+
+msgid "robots.txt exists, but this plugin could not write to it. Please check file permissions."
+msgstr "robots.txt exists, but this plugin could not write to it. Please check file permissions."
+
+msgid "A backup could not be created, so robots.txt was not changed."
+msgstr "A backup could not be created, so robots.txt was not changed."
+
+msgid "The selected backup could not be found."
+msgstr "The selected backup could not be found."
+
+msgid "robots.txt could not be updated."
+msgstr "robots.txt could not be updated."
+
+msgid "You do not have permission to change these settings."
+msgstr "You do not have permission to change these settings."
+
+msgid "No physical robots.txt file was found. This plugin is intended for sites with a real robots.txt file. Create one first, then return to this page."
+msgstr "No physical robots.txt file was found. This plugin is intended for sites with a real robots.txt file. Create one first, then return to this page."
+
+msgid "A physical robots.txt file was found, but this plugin cannot read it."
+msgstr "A physical robots.txt file was found, but this plugin cannot read it."
+
+msgid "A physical robots.txt file was found, but this plugin cannot write to it. Please check file permissions."
+msgstr "A physical robots.txt file was found, but this plugin cannot write to it. Please check file permissions."
+
+msgid "A physical robots.txt file was found. This plugin can manage the preference line safely."
+msgstr "A physical robots.txt file was found. This plugin can manage the preference line safely."
+
+msgid "Not yet changed by this plugin."
+msgstr "Not yet changed by this plugin."

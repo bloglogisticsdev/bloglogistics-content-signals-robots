@@ -4,7 +4,7 @@ Tags: robots.txt, content signal, ai, search, crawlers
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 8.3
-Stable tag: 1.0.8
+Stable tag: 1.1.0
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -83,6 +83,14 @@ Yes. The settings page lists the latest available backups with restore buttons. 
 The plugin removes its saved settings and plugin-created backup files. Your current robots.txt file is left as-is.
 
 == Changelog ==
+
+= 1.1.0 =
+* Refactored the main plugin file into a bootstrap loader.
+* Moved the main plugin class into the includes directory.
+* Added translation support and bundled language files.
+* Added language files for English Australia, English Great Britain, French, German, Spanish, Norwegian Bokmål, Swedish, and Japanese.
+* Added Domain Path metadata for bundled language files.
+* Preserved existing settings, robots.txt handling, backup cleanup, uninstall cleanup, update metadata, icons, banners, Installation, FAQ, Author, and changelog support.
 
 = 1.0.8 =
 * Add Installation and FAQ tabs to the plugin details modal.

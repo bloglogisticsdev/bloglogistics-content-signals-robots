@@ -1,0 +1,194 @@
+msgid ""
+msgstr "Project-Id-Version: BlogLogistics Content Signals for Robots.txt 1.1.0\\nReport-Msgid-Bugs-To: https://www.bloglogistics.com/\\nPOT-Creation-Date: 2026-06-01 21:06+0000\\nPO-Revision-Date: 2026-06-01 21:06+0000\\nLast-Translator: BlogLogistics <support@bloglogistics.com>\\nLanguage-Team: Norwegian Bokmål\\nMIME-Version: 1.0\\nContent-Type: text/plain; charset=UTF-8\\nContent-Transfer-Encoding: 8bit\\nLanguage: nb_NO\\nX-Domain: bloglogistics-content-signals-robots\\n"
+
+msgid "Robots.txt Content Preferences"
+msgstr "Innholdspreferanser for robots.txt"
+
+msgid "BlogLogistics"
+msgstr "BlogLogistics"
+
+msgid "Use the submenu links to configure installed BlogLogistics plugins."
+msgstr "Bruk undermenylenkene for å konfigurere installerte BlogLogistics-utvidelser."
+
+msgid "This plugin updates one line in your physical robots.txt file. It does not rewrite the whole file. It only manages the preference line placed directly under User-agent: *."
+msgstr "Cette extension met à jour une ligne dans votre fichier robots.txt physique. Elle ne réécrit pas tout le fichier. Elle gère seulement la ligne de préférence placée directement sous User-agent: *."
+
+msgid "These settings publish your website’s preferences in robots.txt. They do not guarantee that every crawler, search engine, or AI system will follow them."
+msgstr "Ces réglages publient les préférences de votre site dans robots.txt. Ils ne garantissent pas que tous les robots, moteurs de recherche ou systèmes d’IA les respecteront."
+
+msgid "robots.txt file status"
+msgstr "État du fichier robots.txt"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Last changed by this plugin"
+msgstr "Dernière modification par cette extension"
+
+msgid "Website-use preferences"
+msgstr "Préférences d’utilisation du site"
+
+msgid "Use this plugin to manage robots.txt"
+msgstr "Utiliser cette extension pour gérer robots.txt"
+
+msgid "Manage website-use preferences in robots.txt."
+msgstr "Gérer les préférences d’utilisation du site dans robots.txt."
+
+msgid "Turn this on to let this plugin add or update the preference line in your physical robots.txt file. Turn it off to restore the original preference line, or remove it if there was not one before."
+msgstr "Activez ceci pour permettre à l’extension d’ajouter ou de mettre à jour la ligne de préférence dans votre fichier robots.txt physique. Désactivez-le pour restaurer la ligne d’origine ou la supprimer s’il n’y en avait pas."
+
+msgid "Search results"
+msgstr "Søkeresultater"
+
+msgid "Allow search engines to show this site in search results."
+msgstr "Autoriser les moteurs de recherche à afficher ce site dans les résultats."
+
+msgid "Recommended: On. This allows normal search engines to include the site in search results."
+msgstr "Recommandé : activé. Cela permet aux moteurs de recherche classiques d’inclure le site dans les résultats."
+
+msgid "AI answers"
+msgstr "AI-svar"
+
+msgid "Allow AI tools to use this site when answering users."
+msgstr "Autoriser les outils d’IA à utiliser ce site pour répondre aux utilisateurs."
+
+msgid "Recommended: On. This allows AI tools to use the site as a source when answering questions."
+msgstr "Recommandé : activé. Cela permet aux outils d’IA d’utiliser le site comme source."
+
+msgid "AI training"
+msgstr "AI-trening"
+
+msgid "Allow AI companies to use this site for AI training."
+msgstr "Autoriser les entreprises d’IA à utiliser ce site pour l’entraînement de l’IA."
+
+msgid "Recommended: Off. This tells AI companies that the site should not be used to train AI models."
+msgstr "Recommandé : désactivé. Cela indique que le site ne doit pas être utilisé pour entraîner des modèles d’IA."
+
+msgid "Recommended default:"
+msgstr "Anbefalt standard:"
+
+msgid "Search results: On. AI answers: On. AI training: Off."
+msgstr "Résultats de recherche : activé. Réponses IA : activé. Entraînement IA : désactivé."
+
+msgid "robots.txt line that will be used"
+msgstr "Ligne robots.txt qui sera utilisée"
+
+msgid "This is the technical line added to robots.txt based on your choices above."
+msgstr "Voici la ligne technique ajoutée à robots.txt selon vos choix ci-dessus."
+
+msgid "Save Preferences"
+msgstr "Lagre preferanser"
+
+msgid "No changes to save."
+msgstr "Ingen endringer å lagre."
+
+msgid "Restore recommended defaults"
+msgstr "Gjenopprett anbefalte standarder"
+
+msgid "This turns search results and AI answers on, and AI training off."
+msgstr "Cela active les résultats de recherche et les réponses IA, et désactive l’entraînement IA."
+
+msgid "Full robots.txt editor"
+msgstr "Full robots.txt-redigerer"
+
+msgid "Use this only when you need to review or manually edit the full robots.txt file. A broken robots.txt file can affect how search engines and crawlers access your site."
+msgstr "Utilisez ceci seulement si vous devez vérifier ou modifier manuellement tout le fichier robots.txt. Un fichier robots.txt incorrect peut affecter l’accès des moteurs de recherche et robots à votre site."
+
+msgid "If you manually change the preference line under User-agent: *, the toggle boxes above will update to match after saving."
+msgstr "Si vous modifiez manuellement la ligne de préférence sous User-agent: *, les options ci-dessus seront mises à jour après l’enregistrement."
+
+msgid "Save full robots.txt"
+msgstr "Enregistrer tout robots.txt"
+
+msgid "Backups"
+msgstr "Sikkerhetskopier"
+
+msgid "Before changing robots.txt, this plugin saves a backup copy. The plugin keeps the latest 5 backups so you can recover from mistakes without filling your server with old files."
+msgstr "Avant de modifier robots.txt, cette extension enregistre une sauvegarde. Elle conserve les 5 dernières sauvegardes pour éviter d’encombrer le serveur."
+
+msgid "If this plugin is deleted, its saved settings and backup files are removed. Your current robots.txt file is left as-is."
+msgstr "Si cette extension est supprimée, ses réglages et sauvegardes sont supprimés. Votre fichier robots.txt actuel reste inchangé."
+
+msgid "No backups are available yet."
+msgstr "Aucune sauvegarde n’est encore disponible."
+
+msgid "Backup date and time"
+msgstr "Date et heure de la sauvegarde"
+
+msgid "Action"
+msgstr "Handling"
+
+msgid "Restore"
+msgstr "Gjenopprett"
+
+msgid "Confirm backup restore"
+msgstr "Confirmer la restauration"
+
+msgid "You are about to restore this backup:"
+msgstr "Vous allez restaurer cette sauvegarde :"
+
+msgid "This will replace the current robots.txt file with the selected backup. No new backup will be created during restore."
+msgstr "Cela remplacera le fichier robots.txt actuel par la sauvegarde sélectionnée. Aucune nouvelle sauvegarde ne sera créée pendant la restauration."
+
+msgid "Yes, restore this backup"
+msgstr "Oui, restaurer cette sauvegarde"
+
+msgid "Cancel"
+msgstr "Avbryt"
+
+msgid "Settings saved. robots.txt was updated and a backup was created."
+msgstr "Réglages enregistrés. robots.txt a été mis à jour et une sauvegarde a été créée."
+
+msgid "Settings saved. robots.txt was updated, a backup was created, and older backups were cleaned up. The latest 5 backups are kept."
+msgstr "Réglages enregistrés. robots.txt a été mis à jour, une sauvegarde a été créée et les anciennes sauvegardes ont été nettoyées. Les 5 plus récentes sont conservées."
+
+msgid "robots.txt was saved, a backup was created, and the settings were updated to match the saved file."
+msgstr "robots.txt a été enregistré, une sauvegarde a été créée et les réglages ont été mis à jour."
+
+msgid "robots.txt was saved, a backup was created, older backups were cleaned up, and the settings were updated to match the saved file."
+msgstr "robots.txt a été enregistré, une sauvegarde a été créée, les anciennes sauvegardes ont été nettoyées et les réglages ont été mis à jour."
+
+msgid "The selected backup was restored. The settings were updated to match the restored file."
+msgstr "La sauvegarde sélectionnée a été restaurée. Les réglages ont été mis à jour."
+
+msgid "No changes were made because robots.txt already matched the submitted settings."
+msgstr "Aucune modification n’a été faite car robots.txt correspondait déjà aux réglages soumis."
+
+msgid "Recommended defaults restored."
+msgstr "Valeurs recommandées restaurées."
+
+msgid "No physical robots.txt file was found. This plugin is intended for sites with a real robots.txt file."
+msgstr "Aucun fichier robots.txt physique n’a été trouvé. Cette extension est prévue pour les sites avec un vrai fichier robots.txt."
+
+msgid "robots.txt exists, but this plugin could not read it."
+msgstr "robots.txt existe, mais cette extension n’a pas pu le lire."
+
+msgid "robots.txt exists, but this plugin could not write to it. Please check file permissions."
+msgstr "robots.txt existe, mais cette extension n’a pas pu y écrire. Vérifiez les permissions du fichier."
+
+msgid "A backup could not be created, so robots.txt was not changed."
+msgstr "Aucune sauvegarde n’a pu être créée, donc robots.txt n’a pas été modifié."
+
+msgid "The selected backup could not be found."
+msgstr "La sauvegarde sélectionnée est introuvable."
+
+msgid "robots.txt could not be updated."
+msgstr "robots.txt n’a pas pu être mis à jour."
+
+msgid "You do not have permission to change these settings."
+msgstr "Vous n’avez pas l’autorisation de modifier ces réglages."
+
+msgid "No physical robots.txt file was found. This plugin is intended for sites with a real robots.txt file. Create one first, then return to this page."
+msgstr "Aucun fichier robots.txt physique n’a été trouvé. Créez-en un, puis revenez à cette page."
+
+msgid "A physical robots.txt file was found, but this plugin cannot read it."
+msgstr "Un fichier robots.txt physique a été trouvé, mais cette extension ne peut pas le lire."
+
+msgid "A physical robots.txt file was found, but this plugin cannot write to it. Please check file permissions."
+msgstr "Un fichier robots.txt physique a été trouvé, mais cette extension ne peut pas y écrire. Vérifiez les permissions."
+
+msgid "A physical robots.txt file was found. This plugin can manage the preference line safely."
+msgstr "Un fichier robots.txt physique a été trouvé. Cette extension peut gérer la ligne de préférence en toute sécurité."
+
+msgid "Not yet changed by this plugin."
+msgstr "Ikke endret av denne utvidelsen ennå."
