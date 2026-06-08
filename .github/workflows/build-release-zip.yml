@@ -73,46 +73,167 @@ jobs:
           readme_path = Path("readme.txt")
           readme = readme_path.read_text(encoding="utf-8", errors="replace")
 
-          changelog_match = re.search(
-              r"^==\s*Changelog\s*==\s*(.*?)(?=^==\s+|\Z)",
-              readme,
-              flags=re.IGNORECASE | re.MULTILINE | re.DOTALL,
-          )
+          def format_inline(value):
+              """Convert a small subset of WordPress readme markup to safe HTML."""
+              parts = re.split(r"(`[^`]*`)", value)
+              output = []
 
-          changelog_text = changelog_match.group(1).strip() if changelog_match else ""
+              for part in parts:
+                  if part.startswith("`") and part.endswith("`") and len(part) >= 2:
+                      output.append(f"<code>{html.escape(part[1:-1])}</code>")
+                  else:
+                      output.append(html.escape(part))
 
-          html_parts = []
-          current_items = []
+              return "".join(output)
 
-          def flush_items():
-              nonlocal_items = list(current_items)
-              current_items.clear()
-              if nonlocal_items:
-                  html_parts.append("<ul>")
-                  for item in nonlocal_items:
-                      html_parts.append(f"<li>{html.escape(item)}</li>")
-                  html_parts.append("</ul>")
+          def extract_readme_section(readme_text, section_name):
+              match = re.search(
+                  rf"^==\s*{re.escape(section_name)}\s*==\s*(.*?)(?=^==\s+|\Z)",
+                  readme_text,
+                  flags=re.IGNORECASE | re.MULTILINE | re.DOTALL,
+              )
 
-          for raw_line in changelog_text.splitlines():
-              line = raw_line.strip()
-              if not line:
-                  continue
+              return match.group(1).strip() if match else ""
 
-              version_heading = re.match(r"^=\s*(.*?)\s*=$", line)
-              if version_heading:
-                  flush_items()
-                  html_parts.append(f"<h4>{html.escape(version_heading.group(1))}</h4>")
-                  continue
+          def convert_readme_section_to_html(section_text):
+              html_parts = []
+              paragraph_lines = []
+              list_items = []
+              list_type = None
 
-              if line.startswith("*"):
-                  current_items.append(line.lstrip("*").strip())
-                  continue
+              def flush_paragraph():
+                  nonlocal paragraph_lines
 
-              current_items.append(line)
+                  if paragraph_lines:
+                      paragraph = " ".join(paragraph_lines).strip()
+                      if paragraph:
+                          html_parts.append(f"<p>{format_inline(paragraph)}</p>")
+                      paragraph_lines = []
 
-          flush_items()
+              def flush_list():
+                  nonlocal list_items, list_type
 
-          changelog_html = "".join(html_parts) if html_parts else "<p>No changelog available.</p>"
+                  if list_items and list_type:
+                      html_parts.append(f"<{list_type}>")
+                      for item in list_items:
+                          html_parts.append(f"<li>{format_inline(item)}</li>")
+                      html_parts.append(f"</{list_type}>")
+
+                  list_items = []
+                  list_type = None
+
+              for raw_line in section_text.splitlines():
+                  line = raw_line.strip()
+
+                  if not line:
+                      flush_paragraph()
+                      flush_list()
+                      continue
+
+                  numbered_item = re.match(r"^\d+\.\s+(.*)$", line)
+                  bullet_item = re.match(r"^\*\s+(.*)$", line)
+
+                  if numbered_item:
+                      flush_paragraph()
+                      if list_type != "ol":
+                          flush_list()
+                          list_type = "ol"
+                      list_items.append(numbered_item.group(1).strip())
+                      continue
+
+                  if bullet_item:
+                      flush_paragraph()
+                      if list_type != "ul":
+                          flush_list()
+                          list_type = "ul"
+                      list_items.append(bullet_item.group(1).strip())
+                      continue
+
+                  flush_list()
+                  paragraph_lines.append(line)
+
+              flush_paragraph()
+              flush_list()
+
+              return "".join(html_parts)
+
+          def convert_faq_to_html(faq_text):
+              html_parts = []
+              current_question = None
+              current_answer_lines = []
+
+              def flush_question():
+                  nonlocal current_question, current_answer_lines
+
+                  if not current_question:
+                      return
+
+                  html_parts.append(f"<h4>{format_inline(current_question)}</h4>")
+                  answer_html = convert_readme_section_to_html("\n".join(current_answer_lines).strip())
+                  html_parts.append(answer_html if answer_html else "<p></p>")
+
+                  current_question = None
+                  current_answer_lines = []
+
+              for raw_line in faq_text.splitlines():
+                  line = raw_line.strip()
+                  question_match = re.match(r"^=\s*(.*?)\s*=$", line)
+
+                  if question_match:
+                      flush_question()
+                      current_question = question_match.group(1).strip()
+                      current_answer_lines = []
+                      continue
+
+                  if current_question is not None:
+                      current_answer_lines.append(raw_line)
+
+              flush_question()
+
+              return "".join(html_parts)
+
+          def convert_changelog_to_html(changelog_text):
+              html_parts = []
+              current_items = []
+
+              def flush_items():
+                  nonlocal current_items
+
+                  if current_items:
+                      html_parts.append("<ul>")
+                      for item in current_items:
+                          html_parts.append(f"<li>{format_inline(item)}</li>")
+                      html_parts.append("</ul>")
+                      current_items = []
+
+              for raw_line in changelog_text.splitlines():
+                  line = raw_line.strip()
+                  if not line:
+                      continue
+
+                  version_heading = re.match(r"^=\s*(.*?)\s*=$", line)
+                  if version_heading:
+                      flush_items()
+                      html_parts.append(f"<h4>{format_inline(version_heading.group(1))}</h4>")
+                      continue
+
+                  if line.startswith("*"):
+                      current_items.append(line.lstrip("*").strip())
+                      continue
+
+                  current_items.append(line)
+
+              flush_items()
+
+              return "".join(html_parts)
+
+          installation_text = extract_readme_section(readme, "Installation")
+          faq_text = extract_readme_section(readme, "Frequently Asked Questions")
+          changelog_text = extract_readme_section(readme, "Changelog")
+
+          installation_html = convert_readme_section_to_html(installation_text) or "<p>No installation instructions available.</p>"
+          faq_html = convert_faq_to_html(faq_text) or "<p>No FAQ available.</p>"
+          changelog_html = convert_changelog_to_html(changelog_text) or "<p>No changelog available.</p>"
 
           manifest = {
               "name": plugin_name,
@@ -137,8 +258,8 @@ jobs:
               },
               "sections": {
                   "description": "Safely manages website-use preference signals in a physical robots.txt file.",
-                  "installation": '<ol><li>Install and activate the plugin.</li><li>Go to <strong>BlogLogistics &gt; Robots.txt Content Preferences</strong>.</li><li>Confirm that a physical <code>robots.txt</code> file was found.</li><li>Choose the website-use preferences you want to publish.</li><li>Save your changes. The plugin updates only the managed preference line under <code>User-agent: *</code>.</li></ol>',
-                  "faq": '<h4>Does this plugin rewrite my whole robots.txt file?</h4><p>No. It only manages the Content-Signal line under <code>User-agent: *</code> and leaves the rest of the file alone.</p><h4>Does this plugin work without a physical robots.txt file?</h4><p>This plugin is intended for sites that already use a physical <code>robots.txt</code> file. If no physical file is found, the settings page explains that the plugin cannot manage it automatically.</p><h4>What happens if I turn management off?</h4><p>If there was an original Content-Signal line, the plugin restores it. If there was no original Content-Signal line, the managed line is removed.</p><h4>Why does the plugin save backups?</h4><p>Before changing <code>robots.txt</code>, this plugin saves a backup copy. The plugin keeps the latest 5 backups so you can recover from mistakes without filling your server with old files.</p><h4>Can I manually edit robots.txt?</h4><p>Yes. The settings page includes a full <code>robots.txt</code> editor. If you manually change the Content-Signal line under <code>User-agent: *</code>, the toggle boxes update to match after saving.</p><h4>What happens if I delete the plugin?</h4><p>The plugin removes its saved settings and plugin-created backup files. Your current <code>robots.txt</code> file is left as-is.</p>',
+                  "installation": installation_html,
+                  "faq": faq_html,
                   "changelog": changelog_html,
               },
           }

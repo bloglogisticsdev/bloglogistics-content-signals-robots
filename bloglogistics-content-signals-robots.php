@@ -3,7 +3,7 @@
  * Plugin Name:       BlogLogistics Content Signals for Robots.txt
  * Plugin URI:        https://github.com/bloglogisticsdev/bloglogistics-content-signals-robots
  * Description:       Safely manages website-use preference signals in a physical robots.txt file.
- * Version:           1.1.1
+ * Version:           1.1.2
  * Requires at least: 7.0
  * Requires PHP:      8.3
  * Author:            BlogLogistics
