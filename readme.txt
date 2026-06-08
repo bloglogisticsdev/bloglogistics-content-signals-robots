@@ -44,6 +44,14 @@ These settings publish your website’s preferences in robots.txt. They do not g
 * Removes plugin settings and plugin-created backup files when the plugin is deleted, while leaving the current robots.txt file as-is.
 * Uses BlogLogistics manifest-based updates.
 
+== BlogLogistics Service Usage Notice ==
+
+This plugin is licensed under GPL-3.0-or-later.
+
+This plugin is provided by BlogLogistics as part of an active hosting, maintenance, or site-management service, unless a separate service arrangement has been granted. If the website is moved to another provider, continued BlogLogistics service use, support, updates, configuration assistance, or replacement work may require a separate agreement.
+
+This notice does not restrict any rights granted under the GPL-3.0-or-later licence.
+
 == Installation ==
 
 1. Upload the plugin folder to /wp-content/plugins/.
@@ -81,6 +89,10 @@ Yes. The settings page lists the latest available backups with restore buttons. 
 = What happens if I delete the plugin? =
 
 The plugin removes its saved settings and plugin-created backup files. Your current robots.txt file is left as-is.
+
+= Does this plugin continue to be covered by BlogLogistics service terms if the website moves to another provider? =
+
+This plugin is licensed under GPL-3.0-or-later. BlogLogistics service use, support, updates, configuration assistance, or replacement work may require an active BlogLogistics hosting, maintenance, or site-management service, or a separate agreement. This notice does not restrict any rights granted under the GPL-3.0-or-later licence.
 
 == Changelog ==
 
