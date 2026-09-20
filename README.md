@@ -2,9 +2,9 @@
 Contributors: bloglogistics
 Tags: robots.txt, content signal, ai, search, crawlers
 Requires at least: 7.0
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 1.1.2
+Stable tag: 1.2.0
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -40,6 +40,7 @@ These settings publish your website’s preferences in robots.txt. They do not g
 * Shows the full robots.txt file for review and manual editing.
 * Syncs the plain-language toggles when the Content-Signal line is manually edited.
 * Shows when the file was last changed by this plugin.
+* Checks the public robots.txt file and confirms whether its Content-Signal matches the physical file on the server.
 * Lists available backups and allows restoring a selected backup.
 * Removes plugin settings and plugin-created backup files when the plugin is deleted, while leaving the current robots.txt file as-is.
 * Uses BlogLogistics manifest-based updates.
@@ -65,6 +66,10 @@ This notice does not restrict any rights granted under the GPL-3.0-or-later lice
 = Does this plugin rewrite my whole robots.txt file? =
 
 No. It only manages the Content-Signal line under User-agent: * and leaves the rest of the file alone.
+
+= How can I confirm what crawlers actually receive? =
+
+Use Check live robots.txt on the settings page. The plugin requests the public robots.txt URL and reports whether the published Content-Signal matches the line in the physical file on the server.
 
 = Does this plugin work without a physical robots.txt file? =
 
@@ -95,6 +100,13 @@ The plugin removes its saved settings and plugin-created backup files. Your curr
 This plugin is licensed under GPL-3.0-or-later. BlogLogistics service use, support, updates, configuration assistance, or replacement work may require an active BlogLogistics hosting, maintenance, or site-management service, or a separate agreement. This notice does not restrict any rights granted under the GPL-3.0-or-later licence.
 
 == Changelog ==
+
+= 1.2.0 =
+* Add a manual live robots.txt check that compares the publicly served Content-Signal with the physical file on the server.
+* Show clear matching, different, missing, HTTP error, and connection error results.
+* Add direct Check again and View robots.txt actions.
+* Correct the internal plugin version constant.
+* Confirm compatibility through WordPress 7.1.
 
 = 1.1.2 =
 * Generate update manifest Installation and FAQ sections from readme.txt.

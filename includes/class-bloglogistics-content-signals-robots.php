@@ -26,6 +26,7 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 		 */
 		public function __construct() {
 			add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
+			add_action( 'admin_post_bloglogistics_csr_check_live', array( $this, 'handle_check_live_robots' ) );
 			add_action( 'admin_post_bloglogistics_csr_save', array( $this, 'handle_save' ) );
 			add_action( 'admin_post_bloglogistics_csr_restore_defaults', array( $this, 'handle_restore_defaults' ) );
 			add_action( 'admin_post_bloglogistics_csr_save_editor', array( $this, 'handle_save_editor' ) );
@@ -171,20 +172,22 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 				return;
 			}
 
-			$options        = $this->get_options();
-			$robots_path    = $this->get_robots_path();
-			$file_exists    = file_exists( $robots_path );
-			$file_readable  = $file_exists && is_readable( $robots_path );
-			$file_writable  = $file_exists && is_writable( $robots_path );
-			$line_preview   = $this->build_signal_line( $options );
+			$options         = $this->get_options();
+			$robots_path     = $this->get_robots_path();
+			$file_exists     = file_exists( $robots_path );
+			$file_readable   = $file_exists && is_readable( $robots_path );
+			$file_writable   = $file_exists && is_writable( $robots_path );
+			$line_preview    = $this->build_signal_line( $options );
 			$default_options = self::defaults();
-			$is_default     = (bool) $options['enabled'] === (bool) $default_options['enabled']
+			$is_default      = (bool) $options['enabled'] === (bool) $default_options['enabled']
 				&& (bool) $options['allow_search'] === (bool) $default_options['allow_search']
 				&& (bool) $options['allow_ai_answers'] === (bool) $default_options['allow_ai_answers']
 				&& (bool) $options['allow_ai_training'] === (bool) $default_options['allow_ai_training'];
-			$message_code   = isset( $_GET['bloglogistics_csr_message'] ) ? sanitize_key( wp_unslash( $_GET['bloglogistics_csr_message'] ) ) : '';
-			$robots_content = $file_readable ? (string) file_get_contents( $robots_path ) : '';
-			$backups        = $this->get_backups( $robots_path );
+			$message_code    = isset( $_GET['bloglogistics_csr_message'] ) ? sanitize_key( wp_unslash( $_GET['bloglogistics_csr_message'] ) ) : '';
+			$robots_content  = $file_readable ? (string) file_get_contents( $robots_path ) : '';
+			$backups         = $this->get_backups( $robots_path );
+			$live_check      = $this->get_live_check_result();
+			$live_robots_url = home_url( '/robots.txt' );
 			?>
 			<div class="wrap bloglogistics-csr-wrap">
 				<h1><?php esc_html_e( 'Robots.txt Content Preferences', 'bloglogistics-content-signals-robots' ); ?></h1>
@@ -210,6 +213,16 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 						</tr>
 					</tbody>
 				</table>
+
+				<h2 style="margin-top: 30px;"><?php esc_html_e( 'Published robots.txt', 'bloglogistics-content-signals-robots' ); ?></h2>
+				<p><?php esc_html_e( 'Check the public robots.txt file to confirm that crawlers receive the same Content-Signal as the physical file on this server.', 'bloglogistics-content-signals-robots' ); ?></p>
+				<?php $this->render_live_check_result( $live_check ); ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline-block; margin-right: 8px;">
+					<input type="hidden" name="action" value="bloglogistics_csr_check_live" />
+					<?php wp_nonce_field( 'bloglogistics_csr_check_live', 'bloglogistics_csr_check_live_nonce' ); ?>
+					<?php submit_button( null === $live_check ? esc_html__( 'Check live robots.txt', 'bloglogistics-content-signals-robots' ) : esc_html__( 'Check again', 'bloglogistics-content-signals-robots' ), 'secondary', 'submit', false ); ?>
+				</form>
+				<a class="button button-secondary" href="<?php echo esc_url( $live_robots_url ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'View robots.txt', 'bloglogistics-content-signals-robots' ); ?></a>
 
 				<form id="bloglogistics-csr-preferences-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="max-width: 1000px; margin-top: 20px;">
 					<input type="hidden" name="action" value="bloglogistics_csr_save" />
@@ -513,6 +526,51 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 		}
 
 		/**
+		 * Render the most recent live robots.txt check for the current user.
+		 *
+		 * @param array<string,mixed>|null $result Live check result.
+		 */
+		private function render_live_check_result( ?array $result ): void {
+			if ( null === $result ) {
+				?>
+				<div class="notice notice-info inline" style="max-width: 1000px;">
+					<p><?php esc_html_e( 'The published robots.txt has not been checked yet.', 'bloglogistics-content-signals-robots' ); ?></p>
+				</div>
+				<?php
+				return;
+			}
+
+			$type = isset( $result['type'] ) && in_array( $result['type'], array( 'success', 'warning', 'error' ), true ) ? $result['type'] : 'error';
+			?>
+			<div class="notice notice-<?php echo esc_attr( $type ); ?> inline" style="max-width: 1000px;">
+				<p><strong><?php echo esc_html( isset( $result['message'] ) ? (string) $result['message'] : __( 'The live robots.txt check did not return a valid result.', 'bloglogistics-content-signals-robots' ) ); ?></strong></p>
+				<?php if ( ! empty( $result['expected_line'] ) ) : ?>
+					<p><?php esc_html_e( 'Physical file:', 'bloglogistics-content-signals-robots' ); ?> <code><?php echo esc_html( (string) $result['expected_line'] ); ?></code></p>
+				<?php endif; ?>
+				<?php if ( ! empty( $result['published_line'] ) && $result['published_line'] !== ( $result['expected_line'] ?? null ) ) : ?>
+					<p><?php esc_html_e( 'Published:', 'bloglogistics-content-signals-robots' ); ?> <code><?php echo esc_html( (string) $result['published_line'] ); ?></code></p>
+				<?php endif; ?>
+				<?php if ( ! empty( $result['checked_gmt'] ) ) : ?>
+					<p class="description"><?php echo esc_html( sprintf( __( 'Checked: %s', 'bloglogistics-content-signals-robots' ), $this->format_live_check_time( (string) $result['checked_gmt'] ) ) ); ?></p>
+				<?php endif; ?>
+			</div>
+			<?php
+		}
+
+		/**
+		 * Format the saved live-check time for the site timezone.
+		 */
+		private function format_live_check_time( string $checked_gmt ): string {
+			$timestamp = strtotime( $checked_gmt . ' UTC' );
+
+			if ( false === $timestamp ) {
+				return $checked_gmt;
+			}
+
+			return $this->format_gmt_timestamp( $timestamp );
+		}
+
+		/**
 		 * Get user-friendly file status.
 		 */
 		private function get_file_status_text( bool $exists, bool $readable, bool $writable ): string {
@@ -565,6 +623,133 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 		}
 
 		/**
+		 * Check the public robots.txt file and save a short-lived result for the current user.
+		 */
+		public function handle_check_live_robots(): void {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				$this->redirect_with_message( 'permission_error' );
+			}
+
+			check_admin_referer( 'bloglogistics_csr_check_live', 'bloglogistics_csr_check_live_nonce' );
+
+			$result = $this->check_live_robots();
+			set_transient( $this->get_live_check_transient_key(), $result, 5 * MINUTE_IN_SECONDS );
+
+			$this->redirect_with_message( '' );
+		}
+
+		/**
+		 * Request the public robots.txt and compare its signal with the expected line.
+		 *
+		 * @return array<string,mixed>
+		 */
+		private function check_live_robots(): array {
+			$result = array(
+				'type'           => 'error',
+				'message'        => '',
+				'expected_line'  => null,
+				'published_line' => null,
+				'checked_gmt'     => gmdate( 'Y-m-d H:i:s' ),
+			);
+
+			$robots_path = $this->get_robots_path();
+
+			if ( ! is_file( $robots_path ) || ! is_readable( $robots_path ) ) {
+				$result['message'] = __( 'The public robots.txt could not be compared because the physical robots.txt file is missing or unreadable.', 'bloglogistics-content-signals-robots' );
+				return $result;
+			}
+
+			$physical_contents = file_get_contents( $robots_path );
+
+			if ( false === $physical_contents ) {
+				$result['message'] = __( 'The public robots.txt could not be compared because the physical robots.txt file could not be read.', 'bloglogistics-content-signals-robots' );
+				return $result;
+			}
+
+			$expected_line           = $this->find_signal_line_in_user_agent_star( $physical_contents );
+			$result['expected_line'] = $expected_line;
+			$response                = wp_safe_remote_get(
+				home_url( '/robots.txt' ),
+				array(
+					'timeout'             => 10,
+					'redirection'         => 5,
+					'limit_response_size' => 1024 * 1024,
+					'headers'             => array( 'Accept' => 'text/plain' ),
+				)
+			);
+
+			if ( is_wp_error( $response ) ) {
+				$result['message'] = sprintf(
+					/* translators: %s: connection error message. */
+					__( 'The public robots.txt could not be retrieved: %s', 'bloglogistics-content-signals-robots' ),
+					$response->get_error_message()
+				);
+				return $result;
+			}
+
+			$status_code = (int) wp_remote_retrieve_response_code( $response );
+
+			if ( $status_code < 200 || $status_code >= 300 ) {
+				$result['message'] = sprintf(
+					/* translators: %d: HTTP response status code. */
+					__( 'The public robots.txt could not be retrieved. The server returned HTTP %d.', 'bloglogistics-content-signals-robots' ),
+					$status_code
+				);
+				return $result;
+			}
+
+			$published_line          = $this->find_signal_line_in_user_agent_star( (string) wp_remote_retrieve_body( $response ) );
+			$result['published_line'] = $published_line;
+
+			if ( null === $expected_line && null === $published_line ) {
+				$result['type']    = 'success';
+				$result['message'] = __( 'Verified, the published robots.txt has no Content-Signal, which matches the plugin’s current state.', 'bloglogistics-content-signals-robots' );
+				return $result;
+			}
+
+			if ( null === $published_line ) {
+				$result['message'] = __( 'The published robots.txt was retrieved, but no Content-Signal was found under User-agent: *.', 'bloglogistics-content-signals-robots' );
+				return $result;
+			}
+
+			if ( null === $expected_line || ! $this->signal_lines_match( $expected_line, $published_line ) ) {
+				$result['type']    = 'warning';
+				$result['message'] = __( 'The published robots.txt contains a different Content-Signal.', 'bloglogistics-content-signals-robots' );
+				return $result;
+			}
+
+			$result['type']    = 'success';
+			$result['message'] = __( 'Verified, your published Content-Signal matches the physical file.', 'bloglogistics-content-signals-robots' );
+
+			return $result;
+		}
+
+		/**
+		 * Get the current user's short-lived live-check result.
+		 *
+		 * @return array<string,mixed>|null
+		 */
+		private function get_live_check_result(): ?array {
+			$result = get_transient( $this->get_live_check_transient_key() );
+
+			return is_array( $result ) ? $result : null;
+		}
+
+		/**
+		 * Get the transient key used for the current user's live-check result.
+		 */
+		private function get_live_check_transient_key(): string {
+			return 'bloglogistics_csr_live_check_' . get_current_user_id();
+		}
+
+		/**
+		 * Remove a stale live-check result after robots.txt or its settings change.
+		 */
+		private function clear_live_check_result(): void {
+			delete_transient( $this->get_live_check_transient_key() );
+		}
+
+		/**
 		 * Save settings and update robots.txt.
 		 */
 		public function handle_save(): void {
@@ -587,6 +772,8 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 			if ( ! in_array( $result['status'], array( 'missing', 'unreadable', 'unwritable', 'backup_failed', 'write_failed' ), true ) ) {
 				update_option( self::OPTION_NAME, $result['options'] );
 			}
+
+			$this->clear_live_check_result();
 
 			$this->redirect_with_message( $result['status'] );
 		}
@@ -619,6 +806,7 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 			if ( ! in_array( $result['status'], array( 'missing', 'unreadable', 'unwritable', 'backup_failed', 'write_failed' ), true ) ) {
 				update_option( self::OPTION_NAME, $result['options'] );
 			}
+			$this->clear_live_check_result();
 			$this->redirect_with_message( 'no_change' === $result['status'] ? 'defaults' : $result['status'] );
 		}
 
@@ -676,6 +864,7 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 			$options['last_changed_gmt']    = gmdate( 'Y-m-d H:i:s' );
 			$options['last_changed_reason'] = 'full editor';
 			update_option( self::OPTION_NAME, $options );
+			$this->clear_live_check_result();
 
 			$cleaned = $this->cleanup_backups( $robots_path );
 			$this->redirect_with_message( $cleaned ? 'editor_cleaned' : 'editor_updated' );
@@ -732,6 +921,7 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 			$options['last_changed_gmt']    = gmdate( 'Y-m-d H:i:s' );
 			$options['last_changed_reason'] = 'backup restore';
 			update_option( self::OPTION_NAME, $options );
+			$this->clear_live_check_result();
 
 			$this->redirect_with_message( 'backup_restored' );
 		}
@@ -879,6 +1069,43 @@ if ( ! class_exists( 'BlogLogistics_Content_Signals_Robots', false ) ) {
 			}
 
 			return false;
+		}
+
+		/**
+		 * Compare two Content-Signal lines while ignoring case, spacing, and value order.
+		 */
+		private function signal_lines_match( string $expected, string $published ): bool {
+			return $this->normalise_signal_line( $expected ) === $this->normalise_signal_line( $published );
+		}
+
+		/**
+		 * Normalise a Content-Signal line for comparison.
+		 */
+		private function normalise_signal_line( string $line ): string {
+			if ( ! preg_match( '/^\s*Content-Signal\s*:\s*(.+)$/i', $line, $matches ) ) {
+				return strtolower( (string) preg_replace( '/\s+/', '', trim( $line ) ) );
+			}
+
+			$parts  = array_map( 'trim', explode( ',', $matches[1] ) );
+			$values = array();
+
+			foreach ( $parts as $part ) {
+				if ( ! preg_match( '/^([a-z][a-z0-9-]*)\s*=\s*([a-z0-9-]+)$/i', $part, $value_matches ) ) {
+					return strtolower( (string) preg_replace( '/\s+/', '', trim( $line ) ) );
+				}
+
+				$key = strtolower( $value_matches[1] );
+
+				if ( isset( $values[ $key ] ) ) {
+					return strtolower( (string) preg_replace( '/\s+/', '', trim( $line ) ) );
+				}
+
+				$values[ $key ] = strtolower( $value_matches[2] );
+			}
+
+			ksort( $values );
+
+			return (string) wp_json_encode( $values );
 		}
 
 		/**
